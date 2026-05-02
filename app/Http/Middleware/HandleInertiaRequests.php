@@ -1,0 +1,92 @@
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Http\Request;
+use Inertia\Middleware;
+
+class HandleInertiaRequests extends Middleware
+{
+    protected $rootView = 'app';
+
+    public function share(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            ...parent::share($request),
+            'auth' => [
+                'user' => $user ? [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'roles' => $user->roles()->pluck('name')->values(),
+                    'permissions' => $user->permissionKeys(),
+                ] : null,
+            ],
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+            'school' => config('school.school'),
+            'navigation' => fn () => $this->navigation($request),
+        ];
+    }
+
+    private function navigation(Request $request): array
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            return [];
+        }
+
+        $groups = [
+            [
+                'label' => 'Tổng quan',
+                'items' => array_values(array_filter([
+                    $user->hasPermission('dashboard.view') ? ['label' => 'Dashboard', 'href' => route('dashboard'), 'icon' => 'LayoutDashboard'] : null,
+                    $user->hasPermission('portal.view') ? ['label' => 'Cổng PH/HS', 'href' => route('portal'), 'icon' => 'GraduationCap'] : null,
+                    $user->hasPermission('reports.view') ? ['label' => 'Báo cáo', 'href' => route('reports'), 'icon' => 'BarChart3'] : null,
+                    $user->hasPermission('audit.view') ? ['label' => 'Audit log', 'href' => route('audit.index'), 'icon' => 'ShieldCheck'] : null,
+                ])),
+            ],
+        ];
+
+        $moduleLabels = config('school.module_labels');
+        $resources = collect(config('school.resources'))
+            ->filter(fn (array $resource): bool => $user->hasPermission($resource['permission'].'.view'))
+            ->groupBy('module');
+
+        foreach ($resources as $module => $items) {
+            $groups[] = [
+                'label' => $moduleLabels[$module] ?? $module,
+                'items' => $items
+                    ->map(fn (array $resource, string $key): array => [
+                        'label' => $resource['label'],
+                        'href' => route('resources.index', ['resource' => $key]),
+                        'icon' => $this->iconFor($module),
+                    ])
+                    ->values()
+                    ->all(),
+            ];
+        }
+
+        return array_values(array_filter($groups, fn (array $group): bool => count($group['items']) > 0));
+    }
+
+    private function iconFor(string $module): string
+    {
+        return match ($module) {
+            'identity' => 'KeyRound',
+            'academic' => 'School',
+            'assessment' => 'ClipboardList',
+            'conduct' => 'BadgeCheck',
+            'activities' => 'Trophy',
+            'finance' => 'Receipt',
+            'communication' => 'Megaphone',
+            default => 'Circle',
+        };
+    }
+}
+
