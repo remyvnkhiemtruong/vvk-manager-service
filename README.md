@@ -1,0 +1,1 @@
+# vvk-manager-service
