@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ScoreCategory extends Model
 {
+    protected $table = 'score_types';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -13,4 +15,3 @@ class ScoreCategory extends Model
         return ['weight' => 'decimal:2'];
     }
 }
-

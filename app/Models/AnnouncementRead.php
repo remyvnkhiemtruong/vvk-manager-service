@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class AnnouncementRead extends Model
 {
+    protected $table = 'notification_reads';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -13,4 +15,3 @@ class AnnouncementRead extends Model
         return ['read_at' => 'datetime'];
     }
 }
-

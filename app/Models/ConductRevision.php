@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ConductRevision extends Model
 {
+    protected $table = 'conduct_adjustments';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -16,4 +18,3 @@ class ConductRevision extends Model
         ];
     }
 }
-

@@ -16,7 +16,15 @@ services:
       - "8000:8000"
     environment:
       APP_ENV: local
+      DB_CONNECTION: pgsql
       DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: vvk_school
+      DB_USERNAME: vvk
+      DB_PASSWORD: secret
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: database
       REDIS_HOST: redis
     depends_on:
       - postgres
@@ -46,6 +54,18 @@ services:
     depends_on:
       - postgres
       - redis
+    environment:
+      APP_ENV: local
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: vvk_school
+      DB_USERNAME: vvk
+      DB_PASSWORD: secret
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: database
+      REDIS_HOST: redis
 
   postgres:
     image: postgres:17-alpine
@@ -65,4 +85,3 @@ services:
 
 volumes:
   postgres-data:
-

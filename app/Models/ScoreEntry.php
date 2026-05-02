@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ScoreEntry extends Model
 {
+    protected $table = 'student_scores';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -26,7 +28,6 @@ class ScoreEntry extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(ScoreCategory::class, 'score_category_id');
+        return $this->belongsTo(ScoreCategory::class, 'score_type_id');
     }
 }
-

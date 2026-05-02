@@ -38,7 +38,7 @@ class Auditor
             return null;
         }
 
-        foreach (['password', 'remember_token'] as $key) {
+        foreach (['password', 'remember_token', 'token', 'token_hash', 'access_token', 'refresh_token'] as $key) {
             if (array_key_exists($key, $values)) {
                 $values[$key] = '[redacted]';
             }
@@ -47,4 +47,3 @@ class Auditor
         return $values;
     }
 }
-

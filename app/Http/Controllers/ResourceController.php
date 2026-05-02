@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\FeeInvoice;
 use App\Models\Payment;
-use App\Models\TeachingAssignment;
+use App\Models\Role;
+use App\Models\User;
 use App\Support\Audit\Auditor;
+use App\Support\Auth\ResourceScope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -187,9 +189,9 @@ class ResourceController extends Controller
     private function applyActorDefaults(string $resource, array $data, Request $request): array
     {
         $actorFields = [
-            'score_entries' => 'entered_by',
-            'disciplinary_cases' => 'created_by',
-            'school_events' => 'created_by',
+            'student_scores' => 'entered_by',
+            'discipline_cases' => 'created_by',
+            'events' => 'created_by',
             'payments' => 'collected_by',
             'announcements' => 'created_by',
         ];
@@ -284,64 +286,38 @@ class ResourceController extends Controller
 
     private function recordSnapshot(?Model $record): ?array
     {
-        return $record?->fresh()?->getAttributes() ?? $record?->getAttributes();
+        if (! $record) {
+            return null;
+        }
+
+        $fresh = $record->fresh() ?? $record;
+        $snapshot = $fresh->getAttributes();
+
+        if ($fresh instanceof User) {
+            $snapshot['role_ids'] = $fresh->roles()->pluck('roles.id')->values()->all();
+        }
+
+        if ($fresh instanceof Role) {
+            $snapshot['permission_ids'] = $fresh->permissions()->pluck('permissions.id')->values()->all();
+        }
+
+        return $snapshot;
     }
 
     private function scopeQuery(Request $request, string $resource, Builder $query): Builder
     {
-        $user = $request->user();
-
-        if ($resource === 'score_entries' && $user?->hasRole('giao_vien_bo_mon') && ! $user->hasRole('admin') && ! $user->hasRole('bgh')) {
-            $staffId = $user->staff?->id;
-            $assignments = TeachingAssignment::query()
-                ->where('teacher_id', $staffId)
-                ->get(['class_id', 'subject_id']);
-
-            $subjectIds = $assignments->pluck('subject_id')->unique()->values();
-            $classIds = $assignments->pluck('class_id')->unique()->values();
-
-            $query->whereIn('subject_id', $subjectIds)
-                ->whereExists(function ($subQuery) use ($classIds): void {
-                    $subQuery->selectRaw('1')
-                        ->from('class_enrollments')
-                        ->whereColumn('class_enrollments.student_id', 'score_entries.student_id')
-                        ->whereIn('class_enrollments.class_id', $classIds);
-                });
-        }
-
-        return $query;
+        return app(ResourceScope::class)->scope($request, $resource, $query);
     }
 
     private function enforceRecordScope(Request $request, string $resource, array $data): void
     {
-        $user = $request->user();
-
-        if ($resource !== 'score_entries' || ! $user?->hasRole('giao_vien_bo_mon') || $user->hasRole('admin') || $user->hasRole('bgh')) {
-            return;
-        }
-
-        $allowed = TeachingAssignment::query()
-            ->where('teacher_id', $user->staff?->id)
-            ->where('subject_id', $data['subject_id'] ?? null)
-            ->whereExists(function ($query) use ($data): void {
-                $query->selectRaw('1')
-                    ->from('class_enrollments')
-                    ->whereColumn('class_enrollments.class_id', 'teaching_assignments.class_id')
-                    ->where('class_enrollments.student_id', $data['student_id'] ?? null);
-            })
-            ->exists();
-
-        abort_unless($allowed, 403, 'Giáo viên bộ môn chỉ được nhập điểm lớp-môn được phân công.');
+        app(ResourceScope::class)->assertCanWrite($request, $resource, $data);
     }
 
     private function afterPersist(string $resource, Model $record): void
     {
         if ($resource === 'payments' && $record instanceof Payment) {
-            $this->refreshInvoice($record->fee_invoice_id);
-        }
-
-        if ($resource === 'fee_invoice_items') {
-            $this->refreshInvoice($record->fee_invoice_id);
+            $this->refreshInvoice($record->student_fee_id);
         }
     }
 
@@ -357,11 +333,9 @@ class ResourceController extends Controller
             return;
         }
 
-        $itemTotal = DB::table('fee_invoice_items')->where('fee_invoice_id', $invoice->id)->sum('amount');
-        $paidTotal = DB::table('payments')->where('fee_invoice_id', $invoice->id)->sum('amount');
+        $paidTotal = DB::table('payments')->where('student_fee_id', $invoice->id)->sum('amount');
 
         $invoice->forceFill([
-            'total_amount' => $itemTotal > 0 ? $itemTotal : $invoice->total_amount,
             'paid_amount' => $paidTotal,
             'status' => $paidTotal <= 0 ? 'unpaid' : ($paidTotal < (float) $invoice->total_amount ? 'partial' : 'paid'),
         ])->save();

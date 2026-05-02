@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ScoreRevision extends Model
 {
+    protected $table = 'score_change_logs';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -16,4 +18,3 @@ class ScoreRevision extends Model
         ];
     }
 }
-

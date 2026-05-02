@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Commendation extends Model
 {
+    protected $table = 'rewards';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -13,4 +15,3 @@ class Commendation extends Model
         return ['issued_date' => 'date'];
     }
 }
-

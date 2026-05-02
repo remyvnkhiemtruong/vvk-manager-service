@@ -23,5 +23,14 @@ class TeachingAssignment extends Model
     {
         return $this->belongsTo(Subject::class);
     }
-}
 
+    public function schoolYear(): BelongsTo
+    {
+        return $this->belongsTo(SchoolYear::class);
+    }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
+    }
+}

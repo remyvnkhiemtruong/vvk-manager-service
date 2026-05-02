@@ -16,6 +16,7 @@ export type PageProps = {
         user: null | {
             id: number;
             name: string;
+            username: string | null;
             email: string;
             roles: string[];
             permissions: string[];
@@ -50,4 +51,3 @@ export type Paginated<T> = {
     to: number | null;
     total: number;
 };
-

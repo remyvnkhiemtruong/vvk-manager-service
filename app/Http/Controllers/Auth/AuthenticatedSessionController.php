@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Support\Audit\Auditor;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,21 +21,33 @@ class AuthenticatedSessionController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $credentials = $request->validate([
-            'email' => ['required', 'email'],
+        $data = $request->validate([
+            'login' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ]);
 
-        if (! Auth::attempt([...$credentials, 'status' => 'active'], $request->boolean('remember'))) {
+        $user = User::findForLogin($data['login']);
+
+        if (! $user || $user->status !== 'active' || ! Hash::check($data['password'], $user->password)) {
+            Auditor::record(
+                'auth.login_failed',
+                $user,
+                null,
+                ['login' => $data['login'], 'reason' => $user?->status === 'active' ? 'invalid_credentials' : 'inactive_or_missing'],
+                $request
+            );
+
             return back()->withErrors([
-                'email' => 'Thông tin đăng nhập không đúng hoặc tài khoản đang bị khóa.',
-            ])->onlyInput('email');
+                'login' => 'Thông tin đăng nhập không đúng hoặc tài khoản đang bị khóa.',
+            ])->onlyInput('login');
         }
 
-        $request->session()->regenerate();
-        $request->user()->forceFill(['last_login_at' => now()])->save();
+        Auth::login($user, $request->boolean('remember'));
 
-        Auditor::record('auth.login', $request->user(), null, ['email' => $request->user()->email], $request);
+        $request->session()->regenerate();
+        $user->forceFill(['last_login_at' => now()])->save();
+
+        Auditor::record('auth.login', $user, null, ['login' => $data['login']], $request, ['surface' => 'web']);
 
         return redirect()->intended(route('dashboard'));
     }
@@ -54,4 +68,3 @@ class AuthenticatedSessionController extends Controller
         return redirect()->route('login');
     }
 }
-

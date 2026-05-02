@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class FeeInvoice extends Model
 {
+    protected $table = 'student_fees';
+
     protected $guarded = [];
 
     protected function casts(): array
@@ -17,4 +19,3 @@ class FeeInvoice extends Model
         ];
     }
 }
-

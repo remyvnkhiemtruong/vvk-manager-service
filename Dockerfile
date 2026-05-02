@@ -1,9 +1,12 @@
 FROM php:8.4-cli-alpine AS base
 
-RUN apk add --no-cache bash curl git icu-dev libzip-dev nodejs npm postgresql-dev unzip zip \
-    && docker-php-ext-install intl opcache pdo_pgsql zip \
+RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
+    && apk add --no-cache bash curl freetype-dev git icu-dev libjpeg-turbo-dev libpng-dev libzip-dev nodejs npm oniguruma-dev postgresql-dev unzip zip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install dom gd intl mbstring opcache pdo_pgsql simplexml xml xmlreader xmlwriter zip \
     && pecl install redis \
-    && docker-php-ext-enable redis
+    && docker-php-ext-enable redis \
+    && apk del .build-deps
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

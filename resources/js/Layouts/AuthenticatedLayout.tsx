@@ -53,10 +53,10 @@ export default function AuthenticatedLayout({ title, eyebrow, actions, children 
                     </div>
                     <div className="topbar-actions">
                         {actions}
-                        <div className="user-chip">
+                        <Link className="user-chip" href="/profile">
                             <span>{auth.user?.name}</span>
                             <small>{auth.user?.roles.join(', ')}</small>
-                        </div>
+                        </Link>
                         <button className="icon-button" title="Đăng xuất" onClick={() => router.post('/logout')}>
                             <Icons.LogOut size={18} />
                         </button>
@@ -72,4 +72,3 @@ export default function AuthenticatedLayout({ title, eyebrow, actions, children 
         </div>
     );
 }
-

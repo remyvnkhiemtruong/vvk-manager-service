@@ -1,11 +1,11 @@
 import { Head, useForm, usePage } from '@inertiajs/react';
-import { LockKeyhole, Mail } from 'lucide-react';
+import { LockKeyhole, UserRound } from 'lucide-react';
 import type { PageProps } from '../../types';
 
 export default function Login() {
     const { school } = usePage<PageProps>().props;
     const form = useForm({
-        email: 'admin@vvk.local',
+        login: 'admin',
         password: 'password',
         remember: true,
     });
@@ -29,12 +29,12 @@ export default function Login() {
 
                 <form onSubmit={submit} className="login-form">
                     <label>
-                        <span>Email</span>
+                        <span>Email hoặc tên đăng nhập</span>
                         <div className="input-with-icon">
-                            <Mail size={18} />
-                            <input value={form.data.email} onChange={(event) => form.setData('email', event.target.value)} type="email" autoFocus />
+                            <UserRound size={18} />
+                            <input value={form.data.login} onChange={(event) => form.setData('login', event.target.value)} type="text" autoFocus />
                         </div>
-                        {form.errors.email && <small className="field-error">{form.errors.email}</small>}
+                        {form.errors.login && <small className="field-error">{form.errors.login}</small>}
                     </label>
 
                     <label>
@@ -59,4 +59,3 @@ export default function Login() {
         </div>
     );
 }
-

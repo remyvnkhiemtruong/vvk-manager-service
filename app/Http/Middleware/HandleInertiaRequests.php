@@ -19,6 +19,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'username' => $user->username,
                     'email' => $user->email,
                     'roles' => $user->roles()->pluck('name')->values(),
                     'permissions' => $user->permissionKeys(),
@@ -64,7 +65,7 @@ class HandleInertiaRequests extends Middleware
                 'items' => $items
                     ->map(fn (array $resource, string $key): array => [
                         'label' => $resource['label'],
-                        'href' => route('resources.index', ['resource' => $key]),
+                        'href' => $this->resourceHref($key),
                         'icon' => $this->iconFor($module),
                     ])
                     ->values()
@@ -88,5 +89,14 @@ class HandleInertiaRequests extends Middleware
             default => 'Circle',
         };
     }
-}
 
+    private function resourceHref(string $key): string
+    {
+        return match ($key) {
+            'students' => route('academic.students.index'),
+            'teachers' => route('academic.teachers.index'),
+            'classes' => route('academic.classes.index'),
+            default => route('resources.index', ['resource' => $key]),
+        };
+    }
+}

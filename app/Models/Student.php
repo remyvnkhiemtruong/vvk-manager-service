@@ -23,12 +23,18 @@ class Student extends Model
 
     public function guardians(): BelongsToMany
     {
-        return $this->belongsToMany(Guardian::class, 'student_guardians')->withPivot('relationship')->withTimestamps();
+        return $this->belongsToMany(Guardian::class, 'student_guardians')
+            ->withPivot('relationship', 'is_primary')
+            ->withTimestamps();
     }
 
     public function enrollments(): HasMany
     {
         return $this->hasMany(ClassEnrollment::class);
     }
-}
 
+    public function transferLogs(): HasMany
+    {
+        return $this->hasMany(StudentClassTransferLog::class);
+    }
+}
