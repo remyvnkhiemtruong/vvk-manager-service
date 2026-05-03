@@ -602,31 +602,45 @@ class DatabaseSeeder extends Seeder
     private function seedConduct(int $yearId, int $semesterOneId, int $semesterTwoId, array $classIds, array $studentIds, array $users): void
     {
         $rules = [
-            ['PHONE_FREE', 'Thuc hien truong hoc khong dien thoai', 10, 'bonus'],
-            ['STEM_ACTIVE', 'Tham gia ngay hoi STEM', 5, 'bonus'],
-            ['LATE', 'Di tre khong ly do', -3, 'deduction'],
-            ['UNIFORM', 'Vi pham dong phuc', -2, 'deduction'],
+            ['LATE', 'Đi học trễ', -3, 'deduction', 'minor', false],
+            ['ABSENT_NO_PERMISSION', 'Nghỉ không phép', -8, 'deduction', 'major', true],
+            ['NO_UNIFORM', 'Không đồng phục', -2, 'deduction', 'minor', false],
+            ['PHONE_IN_CLASS', 'Sử dụng điện thoại trong giờ học', -5, 'deduction', 'normal', false],
+            ['NOISY', 'Gây mất trật tự', -4, 'deduction', 'normal', false],
+            ['DISRESPECTFUL', 'Vô lễ', -15, 'deduction', 'serious', true],
+            ['FIGHTING', 'Đánh nhau', -20, 'deduction', 'serious', true],
+            ['CHEATING', 'Gian lận kiểm tra', -15, 'deduction', 'serious', true],
+            ['MOVEMENT_PARTICIPATION', 'Tham gia phong trào', 5, 'bonus', 'normal', false],
+            ['CONTEST_AWARD', 'Đạt giải hội thi', 12, 'bonus', 'major', true],
+            ['SPORT_AWARD', 'Đạt giải hội thao', 12, 'bonus', 'major', true],
+            ['YOUTH_UNION_ACTIVE', 'Hoạt động Đoàn tích cực', 8, 'bonus', 'normal', false],
+            ['STEM_ACTIVE', 'Tham gia STEM', 8, 'bonus', 'normal', false],
+            ['PEER_SUPPORT', 'Hỗ trợ bạn học tập', 5, 'bonus', 'normal', false],
         ];
 
         $ruleIds = [];
-        foreach ($rules as [$code, $name, $points, $type]) {
-            $ruleIds[] = DB::table('conduct_rules')->insertGetId([
+        foreach ($rules as $index => [$code, $name, $points, $type, $severity, $requiresApproval]) {
+            $ruleIds[$code] = DB::table('conduct_rules')->insertGetId([
                 'code' => $code,
                 'name' => $name,
                 'points' => $points,
                 'rule_type' => $type,
+                'severity' => $severity,
+                'requires_approval' => $requiresApproval,
+                'description' => 'Tiêu chí rèn luyện demo',
+                'sort_order' => $index + 1,
                 'status' => 'active',
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);
         }
 
-        foreach ([['Tot', 90, 100], ['Kha', 75, 89], ['Dat', 50, 74], ['Chua dat', 0, 49]] as [$rating, $min, $max]) {
+        foreach ([['Tốt', 90, 100], ['Khá', 75, 89], ['Trung bình', 50, 74], ['Yếu', 0, 49]] as [$rating, $min, $max]) {
             DB::table('conduct_rating_rules')->insert([
                 'rating' => $rating,
                 'min_score' => $min,
                 'max_score' => $max,
-                'description' => 'Demo conduct rating',
+                'description' => 'Xếp loại rèn luyện demo',
                 'status' => 'active',
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
@@ -634,35 +648,64 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ($studentIds as $index => $studentId) {
+            $classId = $classIds[$index % count($classIds)];
+            $eventRuleCode = $index % 3 === 0 ? 'MOVEMENT_PARTICIPATION' : ($index % 3 === 1 ? 'LATE' : 'NO_UNIFORM');
+            $eventPoints = $index % 3 === 0 ? 5 : ($index % 3 === 1 ? -3 : -2);
+            $bonusPoints = $eventPoints > 0 ? $eventPoints : 0;
+            $minusPoints = $eventPoints < 0 ? abs($eventPoints) : 0;
+            $finalScore = max(0, min(100, 100 + $bonusPoints - $minusPoints));
+            $rating = match (true) {
+                $finalScore >= 90 => 'Tốt',
+                $finalScore >= 75 => 'Khá',
+                $finalScore >= 50 => 'Trung bình',
+                default => 'Yếu',
+            };
+
             $summaryId = DB::table('conduct_score_summaries')->insertGetId([
                 'school_year_id' => $yearId,
                 'semester_id' => $semesterTwoId,
-                'class_id' => $classIds[$index % count($classIds)],
+                'class_id' => $classId,
                 'student_id' => $studentId,
-                'score' => 80 + ($index % 15),
-                'rating' => $index % 4 === 0 ? 'Tot' : 'Kha',
+                'base_score' => 100,
+                'bonus_points' => $bonusPoints,
+                'minus_points' => $minusPoints,
+                'adjustment_points' => 0,
+                'score' => $finalScore,
+                'rating' => $rating,
                 'status' => 'approved',
+                'lock_status' => 'open',
+                'homeroom_comment' => 'Nhận xét rèn luyện demo',
+                'commented_by' => $users['gvcn'],
+                'commented_at' => $this->now,
+                'last_recalculated_at' => $this->now,
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);
 
-            DB::table('conduct_records')->insert([
+            $recordId = DB::table('conduct_records')->insertGetId([
                 'school_year_id' => $yearId,
                 'semester_id' => $semesterTwoId,
-                'class_id' => $classIds[$index % count($classIds)],
+                'class_id' => $classId,
                 'student_id' => $studentId,
-                'conduct_rule_id' => $ruleIds[$index % count($ruleIds)],
-                'points' => $index % 2 === 0 ? 5 : -2,
+                'conduct_rule_id' => $ruleIds[$eventRuleCode],
+                'points' => $eventPoints,
                 'recorded_date' => '2026-03-01',
                 'note' => 'Demo conduct record',
+                'description' => 'Sự kiện rèn luyện demo',
+                'recorded_by' => $users[$eventPoints > 0 ? 'doan_truong' : 'giam_thi'],
                 'status' => 'approved',
+                'approved_by' => $users['gvcn'],
+                'approved_at' => $this->now,
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);
 
             DB::table('conduct_approval_logs')->insert([
+                'conduct_record_id' => $recordId,
                 'conduct_score_summary_id' => $summaryId,
                 'approved_by' => $users['gvcn'],
+                'resolved_by' => $users['gvcn'],
+                'resolved_at' => $this->now,
                 'status' => 'approved',
                 'note' => 'Approved demo conduct summary',
                 'created_at' => $this->now,

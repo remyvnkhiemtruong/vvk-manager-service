@@ -2,6 +2,9 @@
 
 use App\Models\Announcement;
 use App\Models\ClassEnrollment;
+use App\Models\ConductRatingRule;
+use App\Models\ConductRecord;
+use App\Models\ConductRule;
 use App\Models\ConductScore;
 use App\Models\DisciplinaryAction;
 use App\Models\DisciplinaryCase;
@@ -82,6 +85,30 @@ return [
         ],
     ],
 
+    'conduct' => [
+        'base_score' => 100,
+        'min_score' => 0,
+        'max_score' => 100,
+        'approval_point_threshold' => 10,
+        'approval_severities' => ['major', 'serious'],
+        'record_statuses' => [
+            'pending' => 'Cho duyet',
+            'approved' => 'Da duyet',
+            'rejected' => 'Tu choi',
+            'cancelled' => 'Da huy',
+        ],
+        'lock_statuses' => [
+            'open' => 'Dang mo',
+            'locked' => 'Da khoa',
+        ],
+        'ratings' => [
+            'Tốt' => ['min' => 90, 'max' => 100],
+            'Khá' => ['min' => 75, 'max' => 89],
+            'Trung bình' => ['min' => 50, 'max' => 74],
+            'Yếu' => ['min' => 0, 'max' => 49],
+        ],
+    ],
+
     'roles' => [
         'admin' => 'Admin',
         'bgh' => 'Ban giam hieu',
@@ -99,13 +126,13 @@ return [
         'admin' => ['*'],
         'bgh' => ['dashboard.view', 'reports.view', 'audit.view', 'portal.view', 'identity.*', 'academic.*', 'assessment.*', 'conduct.*', 'attendance.*', 'activities.*', 'finance.*', 'communication.*'],
         'giao_vu' => ['dashboard.view', 'reports.view', 'portal.view', 'academic.*', 'assessment.score_types.view', 'assessment.score_columns.*', 'assessment.student_scores.view', 'conduct.conduct_scores.view', 'attendance.*', 'communication.announcements.*'],
-        'gvcn' => ['dashboard.view', 'portal.view', 'academic.students.view', 'academic.classes.view', 'academic.student_class_enrollments.view', 'assessment.student_scores.view', 'conduct.conduct_scores.*', 'conduct.discipline_cases.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
-        'giao_vien_bo_mon' => ['dashboard.view', 'portal.view', 'academic.classes.view', 'academic.subjects.view', 'academic.teaching_assignments.view', 'assessment.student_scores.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
-        'doan_truong' => ['dashboard.view', 'portal.view', 'activities.*', 'communication.announcements.*'],
-        'giam_thi' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.*', 'conduct.discipline_cases.*', 'conduct.discipline_actions.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
+        'gvcn' => ['dashboard.view', 'portal.view', 'academic.students.view', 'academic.classes.view', 'academic.student_class_enrollments.view', 'assessment.student_scores.view', 'conduct.conduct_records.*', 'conduct.conduct_scores.*', 'conduct.conduct_rating_rules.view', 'conduct.discipline_cases.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
+        'giao_vien_bo_mon' => ['dashboard.view', 'portal.view', 'academic.classes.view', 'academic.subjects.view', 'academic.teaching_assignments.view', 'assessment.student_scores.*', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'attendance.attendance_records.*', 'communication.announcements.view'],
+        'doan_truong' => ['dashboard.view', 'portal.view', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'conduct.conduct_scores.view', 'activities.*', 'communication.announcements.*'],
+        'giam_thi' => ['dashboard.view', 'portal.view', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'conduct.conduct_records.update', 'conduct.conduct_scores.*', 'conduct.discipline_cases.*', 'conduct.discipline_actions.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
         'ke_toan' => ['dashboard.view', 'portal.view', 'finance.*', 'communication.announcements.view'],
-        'phu_huynh' => ['dashboard.view', 'portal.view', 'communication.announcements.view'],
-        'hoc_sinh' => ['dashboard.view', 'portal.view', 'communication.announcements.view'],
+        'phu_huynh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'communication.announcements.view'],
+        'hoc_sinh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'communication.announcements.view'],
     ],
 
     'resources' => [
@@ -295,14 +322,44 @@ return [
             'audit' => true,
             'revision' => ['model' => ScoreRevision::class, 'foreign_key' => 'student_score_id'],
         ],
+        'conduct_rules' => [
+            'module' => 'conduct',
+            'label' => 'Tieu chi ren luyen',
+            'model' => ConductRule::class,
+            'permission' => 'conduct.conduct_rules',
+            'columns' => ['code', 'name', 'rule_type', 'points', 'severity', 'requires_approval', 'status'],
+            'fields' => [['name' => 'code', 'label' => 'Ma tieu chi', 'type' => 'text', 'required' => true], ['name' => 'name', 'label' => 'Ten tieu chi', 'type' => 'text', 'required' => true], ['name' => 'rule_type', 'label' => 'Loai', 'type' => 'select', 'options' => ['bonus' => 'Cong diem', 'deduction' => 'Tru diem'], 'required' => true], ['name' => 'points', 'label' => 'So diem', 'type' => 'number', 'required' => true], ['name' => 'severity', 'label' => 'Muc do', 'type' => 'select', 'options' => ['minor' => 'Nhe', 'normal' => 'Thong thuong', 'major' => 'Nang', 'serious' => 'Rat nang'], 'required' => true], ['name' => 'requires_approval', 'label' => 'Can duyet', 'type' => 'checkbox'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['active' => 'Dang dung', 'inactive' => 'Tam dung'], 'required' => true]],
+            'validation' => ['store' => ['code' => ['required', 'string', 'max:64'], 'name' => ['required', 'string', 'max:255'], 'rule_type' => ['required', 'string', 'in:bonus,deduction'], 'points' => ['required', 'integer'], 'severity' => ['required', 'string'], 'requires_approval' => ['boolean'], 'status' => ['required', 'string']], 'update' => ['code' => ['required', 'string', 'max:64'], 'name' => ['required', 'string', 'max:255'], 'rule_type' => ['required', 'string', 'in:bonus,deduction'], 'points' => ['required', 'integer'], 'severity' => ['required', 'string'], 'requires_approval' => ['boolean'], 'status' => ['required', 'string']]],
+            'audit' => true,
+        ],
+        'conduct_records' => [
+            'module' => 'conduct',
+            'label' => 'Su kien ren luyen',
+            'model' => ConductRecord::class,
+            'permission' => 'conduct.conduct_records',
+            'columns' => ['student_id', 'class_id', 'conduct_rule_id', 'points', 'recorded_date', 'status'],
+            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'student_id', 'label' => 'Hoc sinh', 'type' => 'select', 'lookup' => $studentLookup, 'required' => true], ['name' => 'conduct_rule_id', 'label' => 'Tieu chi', 'type' => 'select', 'lookup' => ['model' => ConductRule::class, 'value' => 'id', 'label' => ['code', 'name']], 'required' => true], ['name' => 'points', 'label' => 'Diem', 'type' => 'number', 'required' => true], ['name' => 'recorded_date', 'label' => 'Ngay xay ra', 'type' => 'date', 'required' => true], ['name' => 'description', 'label' => 'Mo ta', 'type' => 'textarea'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['pending' => 'Cho duyet', 'approved' => 'Da duyet', 'rejected' => 'Tu choi', 'cancelled' => 'Da huy'], 'required' => true]],
+            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'conduct_rule_id' => ['required', 'exists:conduct_rules,id'], 'points' => ['required', 'integer'], 'recorded_date' => ['required', 'date'], 'description' => ['nullable', 'string'], 'status' => ['required', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'conduct_rule_id' => ['required', 'exists:conduct_rules,id'], 'points' => ['required', 'integer'], 'recorded_date' => ['required', 'date'], 'description' => ['nullable', 'string'], 'status' => ['required', 'string']]],
+            'audit' => true,
+        ],
+        'conduct_rating_rules' => [
+            'module' => 'conduct',
+            'label' => 'Xep loai ren luyen',
+            'model' => ConductRatingRule::class,
+            'permission' => 'conduct.conduct_rating_rules',
+            'columns' => ['rating', 'min_score', 'max_score', 'status'],
+            'fields' => [['name' => 'rating', 'label' => 'Xep loai', 'type' => 'text', 'required' => true], ['name' => 'min_score', 'label' => 'Diem tu', 'type' => 'number', 'required' => true], ['name' => 'max_score', 'label' => 'Diem den', 'type' => 'number', 'required' => true], ['name' => 'description', 'label' => 'Mo ta', 'type' => 'textarea'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['active' => 'Dang dung', 'inactive' => 'Tam dung'], 'required' => true]],
+            'validation' => ['store' => ['rating' => ['required', 'string'], 'min_score' => ['required', 'integer'], 'max_score' => ['required', 'integer'], 'description' => ['nullable', 'string'], 'status' => ['required', 'string']], 'update' => ['rating' => ['required', 'string'], 'min_score' => ['required', 'integer'], 'max_score' => ['required', 'integer'], 'description' => ['nullable', 'string'], 'status' => ['required', 'string']]],
+            'audit' => true,
+        ],
         'conduct_scores' => [
             'module' => 'conduct',
             'label' => 'Tong hop ren luyen',
             'model' => ConductScore::class,
             'permission' => 'conduct.conduct_scores',
-            'columns' => ['student_id', 'semester_id', 'score', 'rating', 'status'],
-            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'student_id', 'label' => 'Hoc sinh', 'type' => 'select', 'lookup' => $studentLookup, 'required' => true], ['name' => 'score', 'label' => 'Diem', 'type' => 'number', 'required' => true], ['name' => 'rating', 'label' => 'Xep loai', 'type' => 'text'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['draft' => 'Nhap', 'approved' => 'Da duyet'], 'required' => true], ['name' => 'note', 'label' => 'Ghi chu', 'type' => 'textarea']],
-            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'score' => ['required', 'integer', 'min:0', 'max:100'], 'rating' => ['nullable', 'string'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'score' => ['required', 'integer', 'min:0', 'max:100'], 'rating' => ['nullable', 'string'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']]],
+            'columns' => ['student_id', 'semester_id', 'base_score', 'bonus_points', 'minus_points', 'adjustment_points', 'score', 'rating', 'lock_status'],
+            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'student_id', 'label' => 'Hoc sinh', 'type' => 'select', 'lookup' => $studentLookup, 'required' => true], ['name' => 'base_score', 'label' => 'Diem nen', 'type' => 'number', 'required' => true], ['name' => 'score', 'label' => 'Diem cuoi', 'type' => 'number', 'required' => true], ['name' => 'rating', 'label' => 'Xep loai', 'type' => 'text'], ['name' => 'lock_status', 'label' => 'Trang thai khoa', 'type' => 'select', 'options' => ['open' => 'Dang mo', 'locked' => 'Da khoa'], 'required' => true], ['name' => 'homeroom_comment', 'label' => 'Nhan xet GVCN', 'type' => 'textarea']],
+            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'base_score' => ['nullable', 'integer'], 'score' => ['required', 'integer'], 'rating' => ['nullable', 'string'], 'status' => ['nullable', 'string'], 'lock_status' => ['nullable', 'string'], 'homeroom_comment' => ['nullable', 'string'], 'note' => ['nullable', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'base_score' => ['nullable', 'integer'], 'score' => ['required', 'integer'], 'rating' => ['nullable', 'string'], 'status' => ['nullable', 'string'], 'lock_status' => ['nullable', 'string'], 'homeroom_comment' => ['nullable', 'string'], 'note' => ['nullable', 'string']]],
             'audit' => true,
         ],
         'events' => [

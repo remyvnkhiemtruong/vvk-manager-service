@@ -79,7 +79,7 @@ class ResourceScope
             abort_unless($allowed, 403, 'Giáo viên bộ môn chỉ được nhập điểm lớp-môn được phân công.');
         }
 
-        if ($user->hasRole('gvcn') && in_array($resource, ['conduct_scores', 'student_scores', 'student_class_enrollments'], true)) {
+        if ($user->hasRole('gvcn') && in_array($resource, ['conduct_records', 'conduct_scores', 'student_scores', 'student_class_enrollments'], true)) {
             $studentIds = $this->homeroomStudentIds($user);
             $classIds = $this->homeroomClassIds($user);
             $studentId = (int) ($data['student_id'] ?? 0);
@@ -108,6 +108,7 @@ class ResourceScope
             'subjects' => $query->whereIn('id', $subjectIds),
             'teaching_assignments' => $query->where('teacher_id', $user->staff?->id),
             'score_columns' => $query->whereIn('subject_id', $subjectIds)->whereIn('class_id', $classIds),
+            'conduct_records' => $query->whereIn('class_id', $classIds),
             'student_scores' => $query->whereExists(function ($subQuery) use ($user): void {
                 $subQuery->selectRaw('1')
                     ->from('teaching_assignments')
@@ -130,7 +131,7 @@ class ResourceScope
         match ($resource) {
             'classes' => $query->whereIn('id', $classIds),
             'students' => $query->whereIn('id', $studentIds),
-            'student_scores', 'conduct_scores', 'student_fees' => $query->whereIn('student_id', $studentIds),
+            'student_scores', 'conduct_records', 'conduct_scores', 'student_fees' => $query->whereIn('student_id', $studentIds),
             'score_columns' => $query->whereIn('class_id', $classIds),
             'student_class_enrollments', 'teaching_assignments' => $query->whereIn('class_id', $classIds),
             'guardians' => $query->whereExists(function ($subQuery) use ($studentIds): void {
@@ -153,7 +154,7 @@ class ResourceScope
     {
         match ($resource) {
             'students' => $query->whereIn('id', $studentIds),
-            'student_scores', 'conduct_scores', 'student_fees' => $query->whereIn('student_id', $studentIds),
+            'student_scores', 'conduct_records', 'conduct_scores', 'student_fees' => $query->whereIn('student_id', $studentIds),
             'student_class_enrollments' => $query->whereIn('student_id', $studentIds),
             'payments' => $query->whereExists(function ($subQuery) use ($studentIds): void {
                 $subQuery->selectRaw('1')

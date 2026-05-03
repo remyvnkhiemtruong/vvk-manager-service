@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Assessment\ScoreReportApiController;
 use App\Http\Controllers\Api\Assessment\AssessmentApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Academic\AcademicApiController;
+use App\Http\Controllers\Api\Conduct\ConductApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function (): void {
@@ -91,4 +92,27 @@ Route::middleware('jwt.auth')->prefix('assessment')->group(function (): void {
     Route::get('students/{student}/scores', [AssessmentApiController::class, 'studentScores']);
     Route::get('score-revisions', [AssessmentApiController::class, 'revisions']);
     Route::get('reports', [AssessmentApiController::class, 'reports']);
+});
+
+Route::middleware('jwt.auth')->prefix('conduct')->group(function (): void {
+    Route::get('rules', [ConductApiController::class, 'rules']);
+    Route::post('rules', [ConductApiController::class, 'storeRule']);
+    Route::put('rules/{rule}', [ConductApiController::class, 'updateRule']);
+    Route::delete('rules/{rule}', [ConductApiController::class, 'deleteRule']);
+    Route::get('records', [ConductApiController::class, 'records']);
+    Route::post('records', [ConductApiController::class, 'storeRecord']);
+    Route::put('records/{record}', [ConductApiController::class, 'updateRecord']);
+    Route::post('records/{record}/approve', [ConductApiController::class, 'approve']);
+    Route::post('records/{record}/reject', [ConductApiController::class, 'reject']);
+    Route::post('records/{record}/cancel', [ConductApiController::class, 'cancel']);
+    Route::get('summaries', [ConductApiController::class, 'summaries']);
+    Route::get('classes/{class}/summaries', [ConductApiController::class, 'classSummaries']);
+    Route::post('summaries/recompute', [ConductApiController::class, 'recompute']);
+    Route::put('summaries/{summary}/adjust', [ConductApiController::class, 'adjust']);
+    Route::put('summaries/{summary}/comment', [ConductApiController::class, 'comment']);
+    Route::post('summaries/{summary}/lock', [ConductApiController::class, 'lock']);
+    Route::post('summaries/{summary}/unlock', [ConductApiController::class, 'unlock']);
+    Route::get('students/{student}/timeline', [ConductApiController::class, 'timeline']);
+    Route::get('records/{record}/evidences/{evidence}', [ConductApiController::class, 'evidence']);
+    Route::get('reports', [ConductApiController::class, 'reports']);
 });

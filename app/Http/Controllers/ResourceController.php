@@ -59,6 +59,7 @@ class ResourceController extends Controller
     {
         $definition = $this->definition($resource);
         $this->authorizeResource($request, $definition, 'create');
+        $this->blockDedicatedConductMutation($resource);
 
         $data = $this->applyActorDefaults($resource, $this->validated($request, $definition, 'store'), $request);
         $this->enforceRecordScope($request, $resource, $data);
@@ -87,6 +88,7 @@ class ResourceController extends Controller
     {
         $definition = $this->definition($resource);
         $this->authorizeResource($request, $definition, 'update');
+        $this->blockDedicatedConductMutation($resource);
 
         /** @var class-string<Model> $model */
         $model = $definition['model'];
@@ -130,6 +132,7 @@ class ResourceController extends Controller
     {
         $definition = $this->definition($resource);
         $this->authorizeResource($request, $definition, 'delete');
+        $this->blockDedicatedConductMutation($resource);
 
         /** @var class-string<Model> $model */
         $model = $definition['model'];
@@ -318,6 +321,13 @@ class ResourceController extends Controller
     {
         if ($resource === 'payments' && $record instanceof Payment) {
             $this->refreshInvoice($record->student_fee_id);
+        }
+    }
+
+    private function blockDedicatedConductMutation(string $resource): void
+    {
+        if (in_array($resource, ['conduct_records', 'conduct_scores'], true)) {
+            abort(403, 'Vui lòng dùng module điểm rèn luyện chuyên biệt để thao tác dữ liệu này.');
         }
     }
 

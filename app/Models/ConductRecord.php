@@ -7,26 +7,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ConductScore extends Model
+class ConductRecord extends Model
 {
     use SoftDeletes;
-
-    protected $table = 'conduct_score_summaries';
 
     protected $guarded = [];
 
     protected function casts(): array
     {
         return [
-            'base_score' => 'integer',
-            'bonus_points' => 'integer',
-            'minus_points' => 'integer',
-            'adjustment_points' => 'integer',
-            'score' => 'integer',
-            'locked_at' => 'datetime',
-            'unlocked_at' => 'datetime',
-            'commented_at' => 'datetime',
-            'last_recalculated_at' => 'datetime',
+            'recorded_date' => 'date',
+            'approved_at' => 'datetime',
+            'rejected_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'metadata' => 'array',
+            'points' => 'integer',
         ];
     }
 
@@ -50,18 +45,28 @@ class ConductScore extends Model
         return $this->belongsTo(Student::class);
     }
 
-    public function lockedBy(): BelongsTo
+    public function rule(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'locked_by');
+        return $this->belongsTo(ConductRule::class, 'conduct_rule_id');
     }
 
-    public function commentedBy(): BelongsTo
+    public function recordedBy(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'commented_by');
+        return $this->belongsTo(User::class, 'recorded_by');
     }
 
-    public function adjustments(): HasMany
+    public function approvedBy(): BelongsTo
     {
-        return $this->hasMany(ConductRevision::class, 'conduct_score_summary_id');
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function rejectedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function evidences(): HasMany
+    {
+        return $this->hasMany(ConductEvidence::class, 'conduct_record_id');
     }
 }

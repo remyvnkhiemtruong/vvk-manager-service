@@ -4,6 +4,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Academic\AcademicPageController;
 use App\Http\Controllers\Assessment\AssessmentPageController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Conduct\ConductPageController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PortalController;
@@ -73,6 +74,31 @@ Route::middleware('auth')->group(function (): void {
         Route::post('score-columns/{column}/approve-unlock', [AssessmentPageController::class, 'approveUnlock'])->name('score-columns.approve-unlock');
         Route::post('score-columns/{column}/reject-unlock', [AssessmentPageController::class, 'rejectUnlock'])->name('score-columns.reject-unlock');
         Route::get('reports', [AssessmentPageController::class, 'reports'])->name('reports');
+    });
+
+    Route::prefix('conduct')->name('conduct.')->group(function (): void {
+        Route::get('rules', [ConductPageController::class, 'rules'])->name('rules');
+        Route::post('rules', [ConductPageController::class, 'storeRule'])->name('rules.store');
+        Route::put('rules/{rule}', [ConductPageController::class, 'updateRule'])->name('rules.update');
+        Route::delete('rules/{rule}', [ConductPageController::class, 'deleteRule'])->name('rules.destroy');
+        Route::get('records', [ConductPageController::class, 'records'])->name('records');
+        Route::post('records', [ConductPageController::class, 'storeRecord'])->name('records.store');
+        Route::put('records/{record}', [ConductPageController::class, 'updateRecord'])->name('records.update');
+        Route::post('records/{record}/approve', [ConductPageController::class, 'approveRecord'])->name('records.approve');
+        Route::post('records/{record}/reject', [ConductPageController::class, 'rejectRecord'])->name('records.reject');
+        Route::post('records/{record}/cancel', [ConductPageController::class, 'cancelRecord'])->name('records.cancel');
+        Route::get('records/{record}/evidences/{evidence}', [ConductPageController::class, 'evidence'])->name('records.evidences.show');
+        Route::get('approvals', [ConductPageController::class, 'approvals'])->name('approvals');
+        Route::get('classes', [ConductPageController::class, 'classes'])->name('classes');
+        Route::post('summaries/recompute', [ConductPageController::class, 'recompute'])->name('summaries.recompute');
+        Route::put('summaries/{summary}/adjust', [ConductPageController::class, 'adjust'])->name('summaries.adjust');
+        Route::put('summaries/{summary}/comment', [ConductPageController::class, 'comment'])->name('summaries.comment');
+        Route::post('summaries/{summary}/lock', [ConductPageController::class, 'lock'])->name('summaries.lock');
+        Route::post('summaries/{summary}/unlock', [ConductPageController::class, 'unlock'])->name('summaries.unlock');
+        Route::get('students/{student}', [ConductPageController::class, 'student'])->name('students.show');
+        Route::get('comments', [ConductPageController::class, 'comments'])->name('comments');
+        Route::get('locks', [ConductPageController::class, 'locks'])->name('locks');
+        Route::get('reports', [ConductPageController::class, 'reports'])->name('reports');
     });
 
     Route::prefix('manage/{resource}')
