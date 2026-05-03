@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\Assessment\ScoreReportApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Academic\AcademicApiController;
 use Illuminate\Support\Facades\Route;
@@ -66,4 +67,9 @@ Route::middleware('jwt.auth')->prefix('academic')->group(function (): void {
     Route::post('teaching-assignments', [AcademicApiController::class, 'storeTeachingAssignment']);
     Route::put('teaching-assignments/{teachingAssignment}', [AcademicApiController::class, 'updateTeachingAssignment']);
     Route::delete('teaching-assignments/{teachingAssignment}', [AcademicApiController::class, 'destroyTeachingAssignment']);
+});
+
+Route::middleware('jwt.auth')->prefix('reports')->group(function (): void {
+    Route::get('scores/low', [ScoreReportApiController::class, 'lowScores']);
+    Route::get('scores/improved', [ScoreReportApiController::class, 'improved']);
 });
