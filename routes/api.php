@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Academic\AcademicApiController;
 use App\Http\Controllers\Api\Campaigns\CampaignApiController;
 use App\Http\Controllers\Api\Conduct\ConductApiController;
+use App\Http\Controllers\Api\Events\EventApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function (): void {
@@ -135,4 +136,29 @@ Route::middleware('jwt.auth')->group(function (): void {
     Route::get('campaigns/{campaign}/rankings', [CampaignApiController::class, 'rankings']);
     Route::post('campaigns/{campaign}/summarize', [CampaignApiController::class, 'summarize']);
     Route::get('campaigns/{campaign}/exports/{kind}', [CampaignApiController::class, 'export']);
+
+    Route::apiResource('events', EventApiController::class)->except(['create', 'edit'])->names('api.events');
+    Route::post('events/{event}/files', [EventApiController::class, 'uploadFile']);
+    Route::get('events/{event}/files/{file}', [EventApiController::class, 'file']);
+    Route::get('events/{event}/categories', [EventApiController::class, 'categories']);
+    Route::post('events/{event}/categories', [EventApiController::class, 'saveCategory']);
+    Route::put('event-categories/{category}/criteria', [EventApiController::class, 'saveCriteria']);
+    Route::get('events/{event}/registrations', [EventApiController::class, 'registrations']);
+    Route::post('events/{event}/registrations', [EventApiController::class, 'storeRegistration']);
+    Route::post('event-registrations/{registration}/approve', [EventApiController::class, 'approve']);
+    Route::post('event-registrations/{registration}/reject', [EventApiController::class, 'reject']);
+    Route::post('event-registrations/{registration}/cancel', [EventApiController::class, 'cancel']);
+    Route::get('events/{event}/teams', [EventApiController::class, 'teams']);
+    Route::post('events/{event}/groups/draw', [EventApiController::class, 'drawGroups']);
+    Route::get('events/{event}/schedules', [EventApiController::class, 'schedules']);
+    Route::post('events/{event}/schedules', [EventApiController::class, 'saveSchedule']);
+    Route::get('events/{event}/matches', [EventApiController::class, 'matches']);
+    Route::post('event-matches/{match}/score', [EventApiController::class, 'scoreMatch']);
+    Route::get('events/{event}/scoring', [EventApiController::class, 'scoring']);
+    Route::post('events/{event}/scoring', [EventApiController::class, 'saveJudgeScores']);
+    Route::post('events/{event}/results', [EventApiController::class, 'saveResult']);
+    Route::get('events/{event}/awards', [EventApiController::class, 'awards']);
+    Route::post('events/{event}/awards', [EventApiController::class, 'saveAward']);
+    Route::post('events/{event}/summarize', [EventApiController::class, 'summarize']);
+    Route::get('events/{event}/exports/{kind}', [EventApiController::class, 'export']);
 });

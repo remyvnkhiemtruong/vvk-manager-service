@@ -98,8 +98,11 @@ class DatabaseSeeder extends Seeder
             'activities.event_registrations',
             'activities.event_teams',
             'activities.event_schedules',
+            'activities.event_matches',
+            'activities.event_scoring',
             'activities.event_results',
             'activities.event_awards',
+            'activities.event_class_scores',
             'finance.fee_types',
             'finance.fee_plans',
             'finance.student_fees',
@@ -819,11 +822,17 @@ class DatabaseSeeder extends Seeder
             'school_year_id' => $yearId,
             'semester_id' => $semesterId,
             'title' => 'Hoi thao cap truong demo',
-            'event_type' => 'sports',
+            'event_type' => 'football',
+            'organizer_unit' => 'Doan truong/BTC demo',
+            'location' => 'San bong demo',
+            'target_audience' => 'all_students',
+            'registration_modes' => json_encode(['team', 'class']),
+            'conduct_points_per_student' => 5,
+            'class_competition_points' => 15,
             'description' => 'Demo sports event only',
             'starts_at' => '2026-04-10 07:30:00',
             'ends_at' => '2026-04-10 16:30:00',
-            'status' => 'open',
+            'status' => 'in_progress',
             'created_by' => $users['doan_truong'],
             'created_at' => $this->now,
             'updated_at' => $this->now,
@@ -833,6 +842,13 @@ class DatabaseSeeder extends Seeder
             'event_id' => $eventId,
             'name' => 'Bong da nam demo',
             'category_type' => 'football',
+            'participation_type' => 'team',
+            'max_participants' => 12,
+            'gender_rule' => 'nam',
+            'rules_text' => 'Demo football group stage',
+            'scoring_mode' => 'sport',
+            'sport_rule' => 'football',
+            'order_index' => 1,
             'status' => 'active',
             'created_at' => $this->now,
             'updated_at' => $this->now,
@@ -852,8 +868,30 @@ class DatabaseSeeder extends Seeder
                 'event_id' => $eventId,
                 'event_category_id' => $categoryId,
                 'class_id' => $classIds[$teamIndex],
+                'captain_student_id' => $studentIds[$teamIndex * 5],
                 'name' => 'Doi '.($teamIndex + 1).' Demo',
-                'status' => 'active',
+                'status' => 'approved',
+                'registered_by' => $users['gvcn'],
+                'approved_by' => $users['doan_truong'],
+                'approved_at' => $this->now,
+                'group_code' => 'A',
+                'seed_number' => $teamIndex + 1,
+                'created_at' => $this->now,
+                'updated_at' => $this->now,
+            ]);
+
+            DB::table('event_registrations')->insert([
+                'event_id' => $eventId,
+                'event_category_id' => $categoryId,
+                'event_team_id' => $teamIds[$teamIndex],
+                'student_id' => $studentIds[$teamIndex * 5],
+                'class_id' => $classIds[$teamIndex],
+                'registration_type' => 'team',
+                'participant_name' => 'Doi '.($teamIndex + 1).' Demo',
+                'status' => 'approved',
+                'registered_by' => $users['gvcn'],
+                'approved_by' => $users['doan_truong'],
+                'approved_at' => $this->now,
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);
@@ -882,10 +920,18 @@ class DatabaseSeeder extends Seeder
 
         $matchId = DB::table('event_matches')->insertGetId([
             'event_id' => $eventId,
+            'event_category_id' => $categoryId,
             'event_schedule_id' => $scheduleId,
             'home_team_id' => $teamIds[0],
             'away_team_id' => $teamIds[1],
+            'group_code' => 'A',
             'round' => 'Final demo',
+            'bracket_round' => 'group',
+            'match_order' => 1,
+            'home_score' => 2,
+            'away_score' => 1,
+            'winner_team_id' => $teamIds[0],
+            'played_at' => '2026-04-10 09:00:00',
             'status' => 'completed',
             'created_at' => $this->now,
             'updated_at' => $this->now,
@@ -917,6 +963,8 @@ class DatabaseSeeder extends Seeder
             'rank' => 1,
             'score' => 2,
             'award_title' => 'Giai nhat demo',
+            'conduct_points' => 8,
+            'class_points' => 20,
             'status' => 'published',
             'created_at' => $this->now,
             'updated_at' => $this->now,
@@ -925,12 +973,129 @@ class DatabaseSeeder extends Seeder
         DB::table('event_awards')->insert([
             'event_id' => $eventId,
             'event_result_id' => $resultId,
+            'event_category_id' => $categoryId,
+            'event_team_id' => $teamIds[0],
+            'class_id' => $classIds[0],
+            'award_type' => 'first',
+            'rank' => 1,
             'title' => 'Cup hoi thao demo',
             'description' => 'Demo award only',
             'awarded_date' => '2026-04-10',
+            'awarded_by' => $users['doan_truong'],
             'created_at' => $this->now,
             'updated_at' => $this->now,
         ]);
+
+        $stemEventId = DB::table('events')->insertGetId([
+            'school_year_id' => $yearId,
+            'semester_id' => $semesterId,
+            'title' => 'Hoi thi STEM cap truong demo',
+            'event_type' => 'stem',
+            'organizer_unit' => 'To Khoa hoc tu nhien demo',
+            'location' => 'Phong STEM demo',
+            'target_audience' => 'all_students',
+            'registration_modes' => json_encode(['team']),
+            'conduct_points_per_student' => 6,
+            'class_competition_points' => 12,
+            'description' => 'Demo STEM contest only',
+            'starts_at' => '2026-04-20 07:30:00',
+            'ends_at' => '2026-04-20 16:30:00',
+            'status' => 'ended',
+            'created_by' => $users['doan_truong'],
+            'created_at' => $this->now,
+            'updated_at' => $this->now,
+        ]);
+
+        $stemCategoryId = DB::table('event_categories')->insertGetId([
+            'event_id' => $stemEventId,
+            'name' => 'San pham STEM demo',
+            'category_type' => 'stem',
+            'participation_type' => 'team',
+            'max_participants' => 5,
+            'rules_text' => 'Demo judged STEM criteria',
+            'scoring_mode' => 'judged',
+            'sport_rule' => 'judged_average',
+            'judge_score_mode' => 'average',
+            'drop_extreme_scores' => false,
+            'max_score' => 50,
+            'order_index' => 1,
+            'status' => 'active',
+            'created_at' => $this->now,
+            'updated_at' => $this->now,
+        ]);
+
+        $criterionIds = [];
+        foreach ([['quality', 'Chat luong', 20], ['creativity', 'Sang tao', 20], ['presentation', 'Thuyet trinh', 10]] as $index => [$code, $name, $max]) {
+            $criterionIds[] = DB::table('event_category_criteria')->insertGetId([
+                'event_category_id' => $stemCategoryId,
+                'code' => $code,
+                'name' => $name,
+                'max_score' => $max,
+                'weight' => 1,
+                'order_index' => $index + 1,
+                'status' => 'active',
+                'created_at' => $this->now,
+                'updated_at' => $this->now,
+            ]);
+        }
+
+        $stemTeamId = DB::table('event_teams')->insertGetId([
+            'event_id' => $stemEventId,
+            'event_category_id' => $stemCategoryId,
+            'class_id' => $classIds[2],
+            'captain_student_id' => $studentIds[10],
+            'name' => 'Nhom STEM demo',
+            'status' => 'approved',
+            'registered_by' => $users['gvcn'],
+            'approved_by' => $users['doan_truong'],
+            'approved_at' => $this->now,
+            'created_at' => $this->now,
+            'updated_at' => $this->now,
+        ]);
+
+        foreach (array_slice($studentIds, 10, 4) as $studentId) {
+            DB::table('event_team_members')->insert([
+                'event_team_id' => $stemTeamId,
+                'student_id' => $studentId,
+                'role' => $studentId === $studentIds[10] ? 'captain' : 'member',
+                'created_at' => $this->now,
+                'updated_at' => $this->now,
+            ]);
+        }
+
+        $judgeId = DB::table('event_judges')->insertGetId([
+            'event_id' => $stemEventId,
+            'teacher_id' => $teacherIds[3],
+            'role' => 'judge',
+            'created_at' => $this->now,
+            'updated_at' => $this->now,
+        ]);
+
+        $stemResultId = DB::table('event_results')->insertGetId([
+            'event_id' => $stemEventId,
+            'event_category_id' => $stemCategoryId,
+            'event_team_id' => $stemTeamId,
+            'rank' => 1,
+            'score' => 45,
+            'award_title' => 'Giai nhat STEM demo',
+            'conduct_points' => 8,
+            'class_points' => 18,
+            'status' => 'published',
+            'created_at' => $this->now,
+            'updated_at' => $this->now,
+        ]);
+
+        foreach ($criterionIds as $index => $criterionId) {
+            DB::table('event_judge_scores')->insert([
+                'event_result_id' => $stemResultId,
+                'event_category_criterion_id' => $criterionId,
+                'event_judge_id' => $judgeId,
+                'score' => [18, 18, 9][$index],
+                'comment' => 'Demo judge comment',
+                'created_at' => $this->now,
+                'updated_at' => $this->now,
+            ]);
+        }
     }
 
     private function seedRewardsAndDiscipline(int $yearId, int $semesterId, array $classIds, array $studentIds, array $teacherIds, array $users): void

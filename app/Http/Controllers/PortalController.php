@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Announcement;
 use App\Models\CampaignParticipant;
 use App\Models\ConductScore;
+use App\Models\EventRegistration;
 use App\Models\FeeInvoice;
 use App\Models\ScoreEntry;
 use Illuminate\Http\Request;
@@ -84,6 +85,24 @@ class PortalController extends Controller
                         'campaign_status' => config('school.campaigns.statuses.'.$participant->campaign?->status, $participant->campaign?->status),
                         'rank' => $participant->result?->rank,
                         'award_title' => $participant->result?->award_title,
+                    ]),
+                'events' => EventRegistration::query()
+                    ->with(['event:id,title,event_type,starts_at,ends_at,status', 'category:id,name', 'team.members', 'student:id,student_code,full_name'])
+                    ->where(function ($query) use ($student): void {
+                        $query->where('student_id', $student->id)
+                            ->orWhereHas('team.members', fn ($member) => $member->where('student_id', $student->id));
+                    })
+                    ->latest()
+                    ->limit(6)
+                    ->get()
+                    ->map(fn (EventRegistration $registration): array => [
+                        'id' => $registration->id,
+                        'title' => $registration->event?->title,
+                        'category' => $registration->category?->name,
+                        'type' => config('school.events.types.'.$registration->event?->event_type, $registration->event?->event_type),
+                        'status' => config('school.events.registration_statuses.'.$registration->status, $registration->status),
+                        'event_status' => config('school.events.statuses.'.$registration->event?->status, $registration->event?->status),
+                        'team_name' => $registration->team?->name,
                     ]),
             ]),
             'announcements' => Announcement::query()

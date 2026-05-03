@@ -6,6 +6,7 @@ use App\Http\Controllers\Assessment\AssessmentPageController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Conduct\ConductPageController;
 use App\Http\Controllers\Campaigns\CampaignPageController;
+use App\Http\Controllers\Events\EventPageController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PortalController;
@@ -127,6 +128,42 @@ Route::middleware('auth')->group(function (): void {
         Route::get('{campaign}/summary', [CampaignPageController::class, 'summary'])->name('summary');
         Route::post('{campaign}/summarize', [CampaignPageController::class, 'summarize'])->name('summarize');
         Route::get('{campaign}/exports/{kind}', [CampaignPageController::class, 'export'])->name('exports');
+    });
+
+    Route::prefix('events')->name('events.')->group(function (): void {
+        Route::get('dashboard', [EventPageController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [EventPageController::class, 'index'])->name('index');
+        Route::get('create', [EventPageController::class, 'create'])->name('create');
+        Route::post('/', [EventPageController::class, 'store'])->name('store');
+        Route::get('registrations', [EventPageController::class, 'approvals'])->name('registrations');
+        Route::post('registrations/{registration}/approve', [EventPageController::class, 'approve'])->name('registrations.approve');
+        Route::post('registrations/{registration}/reject', [EventPageController::class, 'reject'])->name('registrations.reject');
+        Route::post('registrations/{registration}/cancel', [EventPageController::class, 'cancel'])->name('registrations.cancel');
+        Route::post('matches/{match}/score', [EventPageController::class, 'saveMatchScore'])->name('matches.score');
+        Route::get('{event}', [EventPageController::class, 'show'])->name('show');
+        Route::get('{event}/edit', [EventPageController::class, 'edit'])->name('edit');
+        Route::put('{event}', [EventPageController::class, 'update'])->name('update');
+        Route::delete('{event}', [EventPageController::class, 'destroy'])->name('destroy');
+        Route::post('{event}/files', [EventPageController::class, 'uploadFile'])->name('files.store');
+        Route::get('{event}/files/{file}', [EventPageController::class, 'file'])->name('files.show');
+        Route::get('{event}/categories', [EventPageController::class, 'categories'])->name('categories');
+        Route::post('{event}/categories', [EventPageController::class, 'saveCategory'])->name('categories.store');
+        Route::put('categories/{category}/criteria', [EventPageController::class, 'saveCriteria'])->name('categories.criteria');
+        Route::get('{event}/register', [EventPageController::class, 'register'])->name('register');
+        Route::post('{event}/registrations', [EventPageController::class, 'storeRegistration'])->name('registrations.store');
+        Route::get('{event}/groups', [EventPageController::class, 'groups'])->name('groups');
+        Route::post('{event}/groups/draw', [EventPageController::class, 'drawGroups'])->name('groups.draw');
+        Route::get('{event}/schedules', [EventPageController::class, 'schedules'])->name('schedules');
+        Route::post('{event}/schedules', [EventPageController::class, 'saveSchedule'])->name('schedules.store');
+        Route::get('{event}/results', [EventPageController::class, 'results'])->name('results');
+        Route::post('{event}/results', [EventPageController::class, 'saveManualResult'])->name('results.store');
+        Route::get('{event}/scoring', [EventPageController::class, 'scoring'])->name('scoring');
+        Route::post('{event}/scoring', [EventPageController::class, 'saveJudgeScores'])->name('scoring.store');
+        Route::get('{event}/awards', [EventPageController::class, 'awards'])->name('awards');
+        Route::post('{event}/awards', [EventPageController::class, 'saveAward'])->name('awards.store');
+        Route::get('{event}/summary', [EventPageController::class, 'summary'])->name('summary');
+        Route::post('{event}/summarize', [EventPageController::class, 'summarize'])->name('summarize');
+        Route::get('{event}/exports/{kind}', [EventPageController::class, 'export'])->name('exports');
     });
 
     Route::prefix('manage/{resource}')

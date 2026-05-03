@@ -9,6 +9,7 @@ type StudentPortal = {
     conduct: { score: number; rating: string; status: string; note?: string }[];
     invoices: { invoice_no: string; total_amount: string; paid_amount: string; status: string; due_date?: string }[];
     campaigns: { id: number; title?: string; type?: string; status: string; campaign_status: string; rank?: number | null; award_title?: string | null }[];
+    events: { id: number; title?: string; category?: string; type?: string; status: string; event_status: string; team_name?: string | null }[];
 };
 
 type Announcement = {
@@ -65,6 +66,15 @@ export default function Portal({ students, announcements, hasStudentContext }: {
                                 <div className="compact-row" key={campaign.id}>
                                     <span>{campaign.title ?? '-'} · {campaign.status}</span>
                                     <strong>{campaign.award_title ?? (campaign.rank ? `Hạng ${campaign.rank}` : campaign.campaign_status)}</strong>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="portal-section">
+                            <h3>Hoi thi/hoi thao</h3>
+                            {student.events.map((event) => (
+                                <div className="compact-row" key={event.id}>
+                                    <span>{event.title ?? '-'} Â· {event.category ?? event.type ?? '-'}</span>
+                                    <strong>{event.team_name ?? event.status ?? event.event_status}</strong>
                                 </div>
                             ))}
                         </div>

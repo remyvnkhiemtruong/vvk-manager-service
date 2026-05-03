@@ -65,8 +65,20 @@ class HandleInertiaRequests extends Middleware
             ];
         }
 
+        if ($user->hasPermission('activities.events.view')) {
+            $groups[] = [
+                'label' => 'Hoi thi/Hoi thao',
+                'items' => array_values(array_filter([
+                    ['label' => 'Dashboard BTC', 'href' => route('events.dashboard'), 'icon' => 'Medal'],
+                    ['label' => 'Danh sach su kien', 'href' => route('events.index'), 'icon' => 'CalendarRange'],
+                    $user->hasPermission('activities.event_registrations.view') ? ['label' => 'Duyet dang ky', 'href' => route('events.registrations'), 'icon' => 'ClipboardCheck'] : null,
+                ])),
+            ];
+        }
+
         $moduleLabels = config('school.module_labels');
         $resources = collect(config('school.resources'))
+            ->reject(fn (array $resource, string $key): bool => $key === 'events')
             ->filter(fn (array $resource): bool => $user->hasPermission($resource['permission'].'.view'))
             ->groupBy('module');
 
@@ -113,6 +125,7 @@ class HandleInertiaRequests extends Middleware
             'conduct_records' => route('conduct.records'),
             'conduct_scores' => route('conduct.classes'),
             'conduct_rating_rules' => route('conduct.rules'),
+            'events' => route('events.index'),
             default => route('resources.index', ['resource' => $key]),
         };
     }
