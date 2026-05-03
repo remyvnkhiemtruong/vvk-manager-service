@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Announcement;
+use App\Models\CampaignParticipant;
 use App\Models\ConductScore;
 use App\Models\FeeInvoice;
 use App\Models\ScoreEntry;
@@ -66,6 +67,24 @@ class PortalController extends Controller
                     ->latest()
                     ->limit(6)
                     ->get(['invoice_no', 'total_amount', 'paid_amount', 'status', 'due_date']),
+                'campaigns' => CampaignParticipant::query()
+                    ->with(['campaign:id,title,campaign_type,start_date,end_date,status', 'result:id,campaign_participant_id,total_score,rank,award_title,status'])
+                    ->where(function ($query) use ($student): void {
+                        $query->where('student_id', $student->id)
+                            ->orWhereHas('members', fn ($member) => $member->where('student_id', $student->id));
+                    })
+                    ->latest()
+                    ->limit(6)
+                    ->get()
+                    ->map(fn (CampaignParticipant $participant): array => [
+                        'id' => $participant->id,
+                        'title' => $participant->campaign?->title,
+                        'type' => config('school.campaigns.types.'.$participant->campaign?->campaign_type, $participant->campaign?->campaign_type),
+                        'status' => config('school.campaigns.registration_statuses.'.$participant->status, $participant->status),
+                        'campaign_status' => config('school.campaigns.statuses.'.$participant->campaign?->status, $participant->campaign?->status),
+                        'rank' => $participant->result?->rank,
+                        'award_title' => $participant->result?->award_title,
+                    ]),
             ]),
             'announcements' => Announcement::query()
                 ->where('status', 'published')

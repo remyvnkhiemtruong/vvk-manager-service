@@ -749,9 +749,9 @@ class DatabaseSeeder extends Seeder
     private function seedCampaigns(int $yearId, int $semesterId, array $classIds, array $studentIds, array $users): void
     {
         $campaigns = [
-            ['Mo hinh truong hoc khong dien thoai', 'discipline'],
-            ['Ngay hoi STEM demo', 'stem'],
-            ['Bao tuong demo', 'movement'],
+            ['Mô hình trường học không điện thoại', 'phone_free_school'],
+            ['Ngày hội STEM demo', 'stem_day'],
+            ['Báo tường demo', 'wall_newspaper'],
         ];
 
         foreach ($campaigns as $index => [$title, $type]) {
@@ -760,10 +760,15 @@ class DatabaseSeeder extends Seeder
                 'semester_id' => $semesterId,
                 'title' => $title,
                 'campaign_type' => $type,
+                'organizer_unit' => 'Đoàn trường/BTC demo',
+                'target_audience' => 'all_students',
+                'registration_modes' => json_encode(['individual', 'team', 'class']),
                 'start_date' => '2026-03-01',
                 'end_date' => '2026-04-30',
                 'description' => 'Demo campaign only',
-                'status' => 'open',
+                'conduct_points_per_student' => 5,
+                'class_competition_points' => 10,
+                'status' => 'registration_open',
                 'created_by' => $users['doan_truong'],
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
@@ -771,8 +776,11 @@ class DatabaseSeeder extends Seeder
 
             $criteriaId = DB::table('campaign_criteria')->insertGetId([
                 'campaign_id' => $campaignId,
+                'code' => 'demo',
                 'name' => 'Tieu chi demo',
+                'description' => 'Demo criterion only',
                 'max_score' => 10,
+                'weight' => 1,
                 'order_index' => 1,
                 'status' => 'active',
                 'created_at' => $this->now,
@@ -781,10 +789,14 @@ class DatabaseSeeder extends Seeder
 
             DB::table('campaign_participants')->insert([
                 'campaign_id' => $campaignId,
+                'participant_type' => 'team',
                 'class_id' => $classIds[$index % count($classIds)],
                 'student_id' => $studentIds[$index],
                 'participant_name' => 'Nhom demo '.$index,
                 'status' => 'approved',
+                'registered_by' => $users['gvcn'],
+                'approved_by' => $users['doan_truong'],
+                'approved_at' => $this->now,
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
             ]);

@@ -8,6 +8,7 @@ type StudentPortal = {
     scores: { id: number; subject_name?: string; score_column?: string; score?: string; comment?: string; status: string }[];
     conduct: { score: number; rating: string; status: string; note?: string }[];
     invoices: { invoice_no: string; total_amount: string; paid_amount: string; status: string; due_date?: string }[];
+    campaigns: { id: number; title?: string; type?: string; status: string; campaign_status: string; rank?: number | null; award_title?: string | null }[];
 };
 
 type Announcement = {
@@ -55,6 +56,15 @@ export default function Portal({ students, announcements, hasStudentContext }: {
                                 <div className="compact-row" key={invoice.invoice_no}>
                                     <span>{invoice.invoice_no} · {invoice.status}</span>
                                     <strong>{currency.format(Number(invoice.total_amount) - Number(invoice.paid_amount))}</strong>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="portal-section">
+                            <h3>Phong trào</h3>
+                            {student.campaigns.map((campaign) => (
+                                <div className="compact-row" key={campaign.id}>
+                                    <span>{campaign.title ?? '-'} · {campaign.status}</span>
+                                    <strong>{campaign.award_title ?? (campaign.rank ? `Hạng ${campaign.rank}` : campaign.campaign_status)}</strong>
                                 </div>
                             ))}
                         </div>

@@ -5,6 +5,7 @@ use App\Http\Controllers\Academic\AcademicPageController;
 use App\Http\Controllers\Assessment\AssessmentPageController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Conduct\ConductPageController;
+use App\Http\Controllers\Campaigns\CampaignPageController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\PortalController;
@@ -99,6 +100,33 @@ Route::middleware('auth')->group(function (): void {
         Route::get('comments', [ConductPageController::class, 'comments'])->name('comments');
         Route::get('locks', [ConductPageController::class, 'locks'])->name('locks');
         Route::get('reports', [ConductPageController::class, 'reports'])->name('reports');
+    });
+
+    Route::prefix('campaigns')->name('campaigns.')->group(function (): void {
+        Route::get('dashboard', [CampaignPageController::class, 'dashboard'])->name('dashboard');
+        Route::get('/', [CampaignPageController::class, 'index'])->name('index');
+        Route::get('create', [CampaignPageController::class, 'create'])->name('create');
+        Route::post('/', [CampaignPageController::class, 'store'])->name('store');
+        Route::get('registrations', [CampaignPageController::class, 'approvals'])->name('registrations');
+        Route::post('registrations/{participant}/approve', [CampaignPageController::class, 'approve'])->name('registrations.approve');
+        Route::post('registrations/{participant}/reject', [CampaignPageController::class, 'reject'])->name('registrations.reject');
+        Route::post('registrations/{participant}/cancel', [CampaignPageController::class, 'cancel'])->name('registrations.cancel');
+        Route::post('results/{result}/evidences', [CampaignPageController::class, 'uploadEvidence'])->name('results.evidences.store');
+        Route::get('results/{result}/evidences/{file}', [CampaignPageController::class, 'evidence'])->name('results.evidences.show');
+        Route::get('{campaign}/edit', [CampaignPageController::class, 'edit'])->name('edit');
+        Route::put('{campaign}', [CampaignPageController::class, 'update'])->name('update');
+        Route::delete('{campaign}', [CampaignPageController::class, 'destroy'])->name('destroy');
+        Route::post('{campaign}/files', [CampaignPageController::class, 'uploadFile'])->name('files.store');
+        Route::get('{campaign}/files/{file}', [CampaignPageController::class, 'file'])->name('files.show');
+        Route::get('{campaign}/register', [CampaignPageController::class, 'register'])->name('register');
+        Route::post('{campaign}/registrations', [CampaignPageController::class, 'storeRegistration'])->name('registrations.store');
+        Route::get('{campaign}/results', [CampaignPageController::class, 'results'])->name('results');
+        Route::put('{campaign}/criteria', [CampaignPageController::class, 'saveCriteria'])->name('criteria.update');
+        Route::post('{campaign}/results', [CampaignPageController::class, 'storeResult'])->name('results.store');
+        Route::get('{campaign}/rankings', [CampaignPageController::class, 'rankings'])->name('rankings');
+        Route::get('{campaign}/summary', [CampaignPageController::class, 'summary'])->name('summary');
+        Route::post('{campaign}/summarize', [CampaignPageController::class, 'summarize'])->name('summarize');
+        Route::get('{campaign}/exports/{kind}', [CampaignPageController::class, 'export'])->name('exports');
     });
 
     Route::prefix('manage/{resource}')

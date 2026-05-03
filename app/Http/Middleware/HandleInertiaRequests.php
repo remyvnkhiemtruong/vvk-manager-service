@@ -54,6 +54,17 @@ class HandleInertiaRequests extends Middleware
             ],
         ];
 
+        if ($user->hasPermission('activities.campaigns.view')) {
+            $groups[] = [
+                'label' => 'Phong trào và Đoàn',
+                'items' => array_values(array_filter([
+                    ['label' => 'Dashboard Đoàn/BTC', 'href' => route('campaigns.dashboard'), 'icon' => 'Trophy'],
+                    ['label' => 'Phong trào', 'href' => route('campaigns.index'), 'icon' => 'CalendarDays'],
+                    $user->hasPermission('activities.campaign_participants.view') ? ['label' => 'Duyệt đăng ký', 'href' => route('campaigns.registrations'), 'icon' => 'ClipboardCheck'] : null,
+                ])),
+            ];
+        }
+
         $moduleLabels = config('school.module_labels');
         $resources = collect(config('school.resources'))
             ->filter(fn (array $resource): bool => $user->hasPermission($resource['permission'].'.view'))

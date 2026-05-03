@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Assessment\ScoreReportApiController;
 use App\Http\Controllers\Api\Assessment\AssessmentApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Academic\AcademicApiController;
+use App\Http\Controllers\Api\Campaigns\CampaignApiController;
 use App\Http\Controllers\Api\Conduct\ConductApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -115,4 +116,23 @@ Route::middleware('jwt.auth')->prefix('conduct')->group(function (): void {
     Route::get('students/{student}/timeline', [ConductApiController::class, 'timeline']);
     Route::get('records/{record}/evidences/{evidence}', [ConductApiController::class, 'evidence']);
     Route::get('reports', [ConductApiController::class, 'reports']);
+});
+
+Route::middleware('jwt.auth')->group(function (): void {
+    Route::apiResource('campaigns', CampaignApiController::class)->except(['create', 'edit']);
+    Route::post('campaigns/{campaign}/files', [CampaignApiController::class, 'uploadFile']);
+    Route::get('campaigns/{campaign}/files/{file}', [CampaignApiController::class, 'file']);
+    Route::get('campaigns/{campaign}/registrations', [CampaignApiController::class, 'registrations']);
+    Route::post('campaigns/{campaign}/registrations', [CampaignApiController::class, 'storeRegistration']);
+    Route::post('campaign-registrations/{participant}/approve', [CampaignApiController::class, 'approve']);
+    Route::post('campaign-registrations/{participant}/reject', [CampaignApiController::class, 'reject']);
+    Route::post('campaign-registrations/{participant}/cancel', [CampaignApiController::class, 'cancel']);
+    Route::get('campaigns/{campaign}/criteria', [CampaignApiController::class, 'criteria']);
+    Route::put('campaigns/{campaign}/criteria', [CampaignApiController::class, 'saveCriteria']);
+    Route::post('campaigns/{campaign}/results', [CampaignApiController::class, 'storeResult']);
+    Route::put('campaigns/{campaign}/results', [CampaignApiController::class, 'storeResult']);
+    Route::post('campaign-results/{result}/evidences', [CampaignApiController::class, 'uploadEvidence']);
+    Route::get('campaigns/{campaign}/rankings', [CampaignApiController::class, 'rankings']);
+    Route::post('campaigns/{campaign}/summarize', [CampaignApiController::class, 'summarize']);
+    Route::get('campaigns/{campaign}/exports/{kind}', [CampaignApiController::class, 'export']);
 });

@@ -109,6 +109,53 @@ return [
         ],
     ],
 
+    'campaigns' => [
+        'types' => [
+            'stem_day' => 'Ngày hội STEM',
+            'wall_newspaper' => 'Báo tường',
+            'november_music' => 'Văn nghệ 20/11',
+            'career_guidance' => 'Tư vấn hướng nghiệp',
+            'traffic_safety' => 'An toàn giao thông',
+            'phone_free_school' => 'Trường học không điện thoại',
+            'volunteer' => 'Hoạt động tình nguyện',
+            'weekly_monthly_competition' => 'Thi đua tuần/tháng',
+            'youth_union' => 'Hoạt động Đoàn',
+            'movement' => 'Phong trào thi đua',
+        ],
+        'statuses' => [
+            'draft' => 'Nháp',
+            'registration_open' => 'Mở đăng ký',
+            'in_progress' => 'Đang diễn ra',
+            'ended' => 'Kết thúc',
+            'summarized' => 'Đã tổng kết',
+        ],
+        'registration_statuses' => [
+            'pending' => 'Chờ duyệt',
+            'approved' => 'Đã duyệt',
+            'rejected' => 'Từ chối',
+            'cancelled' => 'Đã hủy',
+        ],
+        'registration_modes' => [
+            'individual' => 'Cá nhân',
+            'team' => 'Đội/nhóm',
+            'class' => 'Tập thể lớp',
+        ],
+        'target_audiences' => [
+            'all_students' => 'Toàn trường',
+            'grade_10' => 'Khối 10',
+            'grade_11' => 'Khối 11',
+            'grade_12' => 'Khối 12',
+            'club_members' => 'Câu lạc bộ/nhóm được mời',
+        ],
+        'default_criteria' => [
+            ['code' => 'attendance', 'name' => 'Tham gia đầy đủ', 'max_score' => 10, 'weight' => 1],
+            ['code' => 'quality', 'name' => 'Chất lượng', 'max_score' => 10, 'weight' => 1],
+            ['code' => 'creativity', 'name' => 'Sáng tạo', 'max_score' => 10, 'weight' => 1],
+            ['code' => 'discipline', 'name' => 'Kỷ luật', 'max_score' => 10, 'weight' => 1],
+            ['code' => 'timeliness', 'name' => 'Đúng hạn', 'max_score' => 10, 'weight' => 1],
+        ],
+    ],
+
     'roles' => [
         'admin' => 'Admin',
         'bgh' => 'Ban giam hieu',
@@ -126,13 +173,13 @@ return [
         'admin' => ['*'],
         'bgh' => ['dashboard.view', 'reports.view', 'audit.view', 'portal.view', 'identity.*', 'academic.*', 'assessment.*', 'conduct.*', 'attendance.*', 'activities.*', 'finance.*', 'communication.*'],
         'giao_vu' => ['dashboard.view', 'reports.view', 'portal.view', 'academic.*', 'assessment.score_types.view', 'assessment.score_columns.*', 'assessment.student_scores.view', 'conduct.conduct_scores.view', 'attendance.*', 'communication.announcements.*'],
-        'gvcn' => ['dashboard.view', 'portal.view', 'academic.students.view', 'academic.classes.view', 'academic.student_class_enrollments.view', 'assessment.student_scores.view', 'conduct.conduct_records.*', 'conduct.conduct_scores.*', 'conduct.conduct_rating_rules.view', 'conduct.discipline_cases.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
+        'gvcn' => ['dashboard.view', 'portal.view', 'academic.students.view', 'academic.classes.view', 'academic.student_class_enrollments.view', 'assessment.student_scores.view', 'conduct.conduct_records.*', 'conduct.conduct_scores.*', 'conduct.conduct_rating_rules.view', 'conduct.discipline_cases.*', 'attendance.attendance_records.*', 'activities.campaigns.view', 'activities.campaign_participants.view', 'activities.campaign_participants.create', 'activities.campaign_participants.update', 'activities.campaign_results.view', 'activities.campaign_criteria.view', 'communication.announcements.view'],
         'giao_vien_bo_mon' => ['dashboard.view', 'portal.view', 'academic.classes.view', 'academic.subjects.view', 'academic.teaching_assignments.view', 'assessment.student_scores.*', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'attendance.attendance_records.*', 'communication.announcements.view'],
         'doan_truong' => ['dashboard.view', 'portal.view', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'conduct.conduct_scores.view', 'activities.*', 'communication.announcements.*'],
         'giam_thi' => ['dashboard.view', 'portal.view', 'conduct.conduct_records.view', 'conduct.conduct_records.create', 'conduct.conduct_records.update', 'conduct.conduct_scores.*', 'conduct.discipline_cases.*', 'conduct.discipline_actions.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
         'ke_toan' => ['dashboard.view', 'portal.view', 'finance.*', 'communication.announcements.view'],
-        'phu_huynh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'communication.announcements.view'],
-        'hoc_sinh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'communication.announcements.view'],
+        'phu_huynh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'activities.campaigns.view', 'activities.campaign_participants.view', 'activities.campaign_results.view', 'communication.announcements.view'],
+        'hoc_sinh' => ['dashboard.view', 'portal.view', 'conduct.conduct_scores.view', 'conduct.conduct_records.view', 'activities.campaigns.view', 'activities.campaign_participants.view', 'activities.campaign_participants.create', 'activities.campaign_results.view', 'communication.announcements.view'],
     ],
 
     'resources' => [
