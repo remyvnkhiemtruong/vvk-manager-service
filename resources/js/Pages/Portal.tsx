@@ -1,11 +1,11 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import AuthenticatedLayout from '../Layouts/AuthenticatedLayout';
 
 type StudentPortal = {
     id: number;
     student_code: string;
     full_name: string;
-    scores: { subject_id: number; score: string; status: string; note?: string }[];
+    scores: { id: number; subject_name?: string; score_column?: string; score?: string; comment?: string; status: string }[];
     conduct: { score: number; rating: string; status: string; note?: string }[];
     invoices: { invoice_no: string; total_amount: string; paid_amount: string; status: string; due_date?: string }[];
 };
@@ -30,12 +30,13 @@ export default function Portal({ students, announcements, hasStudentContext }: {
                     <section className="panel" key={student.id}>
                         <h2>{student.full_name}</h2>
                         <p className="muted">{student.student_code}</p>
+                        <Link className="secondary-button compact" href={`/assessment/students/${student.id}`}>Xem chi tiết điểm</Link>
                         <div className="portal-section">
                             <h3>Điểm gần đây</h3>
                             {student.scores.map((score, index) => (
-                                <div className="compact-row" key={`${score.subject_id}-${index}`}>
-                                    <span>Môn #{score.subject_id}</span>
-                                    <strong>{score.score}</strong>
+                                <div className="compact-row" key={`${score.id}-${index}`}>
+                                    <span>{score.subject_name ?? '-'} · {score.score_column ?? '-'}</span>
+                                    <strong>{score.score ?? score.comment ?? '-'}</strong>
                                 </div>
                             ))}
                         </div>
@@ -76,4 +77,3 @@ export default function Portal({ students, announcements, hasStudentContext }: {
         </AuthenticatedLayout>
     );
 }
-

@@ -96,6 +96,8 @@ class HandleInertiaRequests extends Middleware
             'students' => route('academic.students.index'),
             'teachers' => route('academic.teachers.index'),
             'classes' => route('academic.classes.index'),
+            'student_scores' => route('assessment.entry'),
+            'score_columns' => route('assessment.score-columns'),
             default => route('resources.index', ['resource' => $key]),
         };
     }

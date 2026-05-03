@@ -7,17 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ScoreEntry extends Model
+class ScoreColumn extends Model
 {
     use SoftDeletes;
-
-    protected $table = 'student_scores';
 
     protected $guarded = [];
 
     protected function casts(): array
     {
-        return ['score' => 'decimal:2'];
+        return [
+            'max_score' => 'decimal:2',
+            'locked_at' => 'datetime',
+            'unlock_requested_at' => 'datetime',
+        ];
     }
 
     public function schoolYear(): BelongsTo
@@ -35,33 +37,23 @@ class ScoreEntry extends Model
         return $this->belongsTo(SchoolClass::class, 'class_id');
     }
 
-    public function student(): BelongsTo
-    {
-        return $this->belongsTo(Student::class);
-    }
-
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class);
     }
 
-    public function category(): BelongsTo
+    public function scoreType(): BelongsTo
     {
         return $this->belongsTo(ScoreCategory::class, 'score_type_id');
     }
 
-    public function scoreColumn(): BelongsTo
+    public function scores(): HasMany
     {
-        return $this->belongsTo(ScoreColumn::class);
+        return $this->hasMany(ScoreEntry::class);
     }
 
-    public function enteredBy(): BelongsTo
+    public function lockRequests(): HasMany
     {
-        return $this->belongsTo(User::class, 'entered_by');
-    }
-
-    public function revisions(): HasMany
-    {
-        return $this->hasMany(ScoreRevision::class, 'student_score_id');
+        return $this->hasMany(ScoreLockRequest::class);
     }
 }

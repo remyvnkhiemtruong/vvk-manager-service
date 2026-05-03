@@ -333,25 +333,26 @@ class DatabaseSeeder extends Seeder
     private function seedSubjects(): array
     {
         $subjects = [
-            ['TOAN', 'Toan', 'To Toan - Tin'],
-            ['VAN', 'Ngu van', 'To Xa hoi'],
-            ['ANH', 'Tieng Anh', 'To Ngoai ngu'],
-            ['LY', 'Vat ly', 'To Tu nhien'],
-            ['HOA', 'Hoa hoc', 'To Tu nhien'],
-            ['SINH', 'Sinh hoc', 'To Tu nhien'],
-            ['SU', 'Lich su', 'To Xa hoi'],
-            ['DIA', 'Dia ly', 'To Xa hoi'],
-            ['GDCD', 'Giao duc cong dan', 'To Xa hoi'],
-            ['TIN', 'Tin hoc', 'To Toan - Tin'],
+            ['TOAN', 'Toan', 'To Toan - Tin', 'numeric'],
+            ['VAN', 'Ngu van', 'To Xa hoi', 'numeric'],
+            ['ANH', 'Tieng Anh', 'To Ngoai ngu', 'numeric'],
+            ['LY', 'Vat ly', 'To Tu nhien', 'numeric'],
+            ['HOA', 'Hoa hoc', 'To Tu nhien', 'numeric'],
+            ['SINH', 'Sinh hoc', 'To Tu nhien', 'numeric'],
+            ['SU', 'Lich su', 'To Xa hoi', 'numeric'],
+            ['DIA', 'Dia ly', 'To Xa hoi', 'numeric'],
+            ['GDCD', 'Giao duc cong dan', 'To Xa hoi', 'comment'],
+            ['TIN', 'Tin hoc', 'To Toan - Tin', 'numeric'],
         ];
 
         $ids = [];
-        foreach ($subjects as [$code, $name, $department]) {
+        foreach ($subjects as [$code, $name, $department, $assessmentMode]) {
             $ids[$code] = DB::table('subjects')->insertGetId([
                 'code' => $code,
                 'name' => $name,
                 'department' => $department,
                 'default_credit' => 1,
+                'assessment_mode' => $assessmentMode,
                 'status' => 'active',
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
@@ -497,18 +498,20 @@ class DatabaseSeeder extends Seeder
     private function seedScoreSetup(int $yearId, int $semesterOneId, int $semesterTwoId, array $subjectIds): array
     {
         $types = [
-            ['MIENG', 'Diem mieng', 1],
-            ['TX', 'Diem thuong xuyen', 1],
-            ['GK', 'Diem giua ky', 2],
-            ['CK', 'Diem cuoi ky', 3],
+            ['TX', 'Diem thuong xuyen', 1, 'numeric', true],
+            ['GK', 'Diem giua ky', 2, 'numeric', true],
+            ['CK', 'Diem cuoi ky', 3, 'numeric', true],
+            ['NX', 'Diem nhan xet', 0, 'comment', false],
         ];
 
         $scoreTypeIds = [];
-        foreach ($types as [$code, $name, $weight]) {
+        foreach ($types as [$code, $name, $weight, $inputType, $countsTowardAverage]) {
             $scoreTypeIds[$code] = DB::table('score_types')->insertGetId([
                 'code' => $code,
                 'name' => $name,
                 'weight' => $weight,
+                'input_type' => $inputType,
+                'counts_toward_average' => $countsTowardAverage,
                 'status' => 'active',
                 'created_at' => $this->now,
                 'updated_at' => $this->now,
@@ -516,17 +519,21 @@ class DatabaseSeeder extends Seeder
         }
 
         foreach ([$semesterOneId, $semesterTwoId] as $semesterId) {
-            foreach ($subjectIds as $subjectId) {
-                foreach ($scoreTypeIds as $code => $typeId) {
+            foreach ($subjectIds as $subjectCode => $subjectId) {
+                $typeCodes = $subjectCode === 'GDCD' ? ['NX'] : ['TX', 'GK', 'CK'];
+
+                foreach ($typeCodes as $order => $code) {
                     DB::table('score_columns')->insert([
                         'school_year_id' => $yearId,
                         'semester_id' => $semesterId,
                         'subject_id' => $subjectId,
-                        'score_type_id' => $typeId,
+                        'score_type_id' => $scoreTypeIds[$code],
+                        'code' => $code.($code === 'TX' ? '1' : ''),
                         'name' => 'Cot '.$code,
-                        'order_index' => count($scoreTypeIds),
+                        'order_index' => $order + 1,
                         'max_score' => 10,
                         'status' => 'active',
+                        'lock_status' => 'open',
                         'created_at' => $this->now,
                         'updated_at' => $this->now,
                     ]);
@@ -542,7 +549,13 @@ class DatabaseSeeder extends Seeder
         foreach (array_slice($studentIds, 0, 12) as $index => $studentId) {
             $classId = $classIds[$index % count($classIds)];
             $subjectId = array_values($subjectIds)[$index % count($subjectIds)];
-            $scoreTypeId = array_values($scoreTypeIds)[$index % count($scoreTypeIds)];
+            $numericTypeIds = [$scoreTypeIds['TX'], $scoreTypeIds['GK'], $scoreTypeIds['CK']];
+            $scoreTypeId = $numericTypeIds[$index % count($numericTypeIds)];
+            $scoreColumnId = DB::table('score_columns')
+                ->where('semester_id', $semesterTwoId)
+                ->where('subject_id', $subjectId)
+                ->where('score_type_id', $scoreTypeId)
+                ->value('id');
 
             $scoreId = DB::table('student_scores')->insertGetId([
                 'school_year_id' => $yearId,
@@ -551,6 +564,7 @@ class DatabaseSeeder extends Seeder
                 'student_id' => $studentId,
                 'subject_id' => $subjectId,
                 'score_type_id' => $scoreTypeId,
+                'score_column_id' => $scoreColumnId,
                 'score' => 6 + ($index % 5),
                 'status' => 'submitted',
                 'note' => 'Demo score only',

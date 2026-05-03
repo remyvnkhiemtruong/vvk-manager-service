@@ -51,16 +51,27 @@ class ResourceScope
             return;
         }
 
+        if ($resource === 'student_scores' && ! empty($data['score_column_id'])) {
+            $locked = DB::table('score_columns')
+                ->where('id', $data['score_column_id'])
+                ->where('lock_status', '<>', 'open')
+                ->exists();
+
+            abort_unless(! $locked, 403, 'Cot diem dang khoa, can mo khoa truoc khi sua diem.');
+        }
+
         if ($user->hasRole('giao_vien_bo_mon') && $resource === 'student_scores') {
             $allowed = TeachingAssignment::query()
                 ->where('teacher_id', $user->staff?->id)
                 ->where('status', 'active')
                 ->where('subject_id', $data['subject_id'] ?? null)
+                ->where('semester_id', $data['semester_id'] ?? null)
                 ->whereExists(function ($query) use ($data): void {
                     $query->selectRaw('1')
                         ->from('student_class_enrollments')
                         ->whereColumn('student_class_enrollments.class_id', 'teaching_assignments.class_id')
                         ->where('student_class_enrollments.student_id', $data['student_id'] ?? null)
+                        ->whereColumn('student_class_enrollments.semester_id', 'teaching_assignments.semester_id')
                         ->where('student_class_enrollments.status', 'active');
                 })
                 ->exists();
@@ -96,6 +107,7 @@ class ResourceScope
             'classes' => $query->whereIn('id', $classIds),
             'subjects' => $query->whereIn('id', $subjectIds),
             'teaching_assignments' => $query->where('teacher_id', $user->staff?->id),
+            'score_columns' => $query->whereIn('subject_id', $subjectIds)->whereIn('class_id', $classIds),
             'student_scores' => $query->whereExists(function ($subQuery) use ($user): void {
                 $subQuery->selectRaw('1')
                     ->from('teaching_assignments')
@@ -119,6 +131,7 @@ class ResourceScope
             'classes' => $query->whereIn('id', $classIds),
             'students' => $query->whereIn('id', $studentIds),
             'student_scores', 'conduct_scores', 'student_fees' => $query->whereIn('student_id', $studentIds),
+            'score_columns' => $query->whereIn('class_id', $classIds),
             'student_class_enrollments', 'teaching_assignments' => $query->whereIn('class_id', $classIds),
             'guardians' => $query->whereExists(function ($subQuery) use ($studentIds): void {
                 $subQuery->selectRaw('1')

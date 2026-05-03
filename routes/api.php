@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Assessment\ScoreReportApiController;
+use App\Http\Controllers\Api\Assessment\AssessmentApiController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\Academic\AcademicApiController;
 use Illuminate\Support\Facades\Route;
@@ -72,4 +73,22 @@ Route::middleware('jwt.auth')->prefix('academic')->group(function (): void {
 Route::middleware('jwt.auth')->prefix('reports')->group(function (): void {
     Route::get('scores/low', [ScoreReportApiController::class, 'lowScores']);
     Route::get('scores/improved', [ScoreReportApiController::class, 'improved']);
+});
+
+Route::middleware('jwt.auth')->prefix('assessment')->group(function (): void {
+    Route::get('scorebooks', [AssessmentApiController::class, 'scorebooks']);
+    Route::get('scorebooks/{class}/{subject}/{semester}', [AssessmentApiController::class, 'scorebook']);
+    Route::post('score-columns', [AssessmentApiController::class, 'storeColumn']);
+    Route::put('score-columns/{column}', [AssessmentApiController::class, 'updateColumn']);
+    Route::delete('score-columns/{column}', [AssessmentApiController::class, 'deleteColumn']);
+    Route::put('scores/bulk', [AssessmentApiController::class, 'saveScores']);
+    Route::post('score-columns/{column}/lock', [AssessmentApiController::class, 'lockColumn']);
+    Route::post('score-columns/{column}/request-unlock', [AssessmentApiController::class, 'requestUnlock']);
+    Route::post('score-columns/{column}/approve-unlock', [AssessmentApiController::class, 'approveUnlock']);
+    Route::post('score-columns/{column}/reject-unlock', [AssessmentApiController::class, 'rejectUnlock']);
+    Route::post('scores/import', [AssessmentApiController::class, 'importScores']);
+    Route::get('classes/{class}/scores/export', [AssessmentApiController::class, 'exportScores']);
+    Route::get('students/{student}/scores', [AssessmentApiController::class, 'studentScores']);
+    Route::get('score-revisions', [AssessmentApiController::class, 'revisions']);
+    Route::get('reports', [AssessmentApiController::class, 'reports']);
 });

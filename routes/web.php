@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\Academic\AcademicPageController;
+use App\Http\Controllers\Assessment\AssessmentPageController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\DashboardController;
@@ -53,6 +54,25 @@ Route::middleware('auth')->group(function (): void {
         Route::post('classes/{schoolClass}/teaching-assignments', [AcademicPageController::class, 'storeTeachingAssignment'])->name('classes.teaching-assignments.store');
         Route::delete('teaching-assignments/{teachingAssignment}', [AcademicPageController::class, 'destroyTeachingAssignment'])->name('teaching-assignments.destroy');
         Route::get('classes/{schoolClass}/students/export', [AcademicPageController::class, 'exportClassStudents'])->name('classes.students.export');
+    });
+
+    Route::prefix('assessment')->name('assessment.')->group(function (): void {
+        Route::get('entry', [AssessmentPageController::class, 'entry'])->name('entry');
+        Route::put('scores/bulk', [AssessmentPageController::class, 'saveScores'])->name('scores.bulk');
+        Route::post('scores/import', [AssessmentPageController::class, 'importScores'])->name('scores.import');
+        Route::get('scores/export', [AssessmentPageController::class, 'exportScores'])->name('scores.export');
+        Route::get('classes', [AssessmentPageController::class, 'classScores'])->name('classes');
+        Route::get('students/{student}', [AssessmentPageController::class, 'student'])->name('students.show');
+        Route::get('revisions', [AssessmentPageController::class, 'revisions'])->name('revisions');
+        Route::get('score-columns', [AssessmentPageController::class, 'scoreColumns'])->name('score-columns');
+        Route::post('score-columns', [AssessmentPageController::class, 'storeColumn'])->name('score-columns.store');
+        Route::put('score-columns/{column}', [AssessmentPageController::class, 'updateColumn'])->name('score-columns.update');
+        Route::delete('score-columns/{column}', [AssessmentPageController::class, 'deleteColumn'])->name('score-columns.destroy');
+        Route::post('score-columns/{column}/lock', [AssessmentPageController::class, 'lockColumn'])->name('score-columns.lock');
+        Route::post('score-columns/{column}/request-unlock', [AssessmentPageController::class, 'requestUnlock'])->name('score-columns.request-unlock');
+        Route::post('score-columns/{column}/approve-unlock', [AssessmentPageController::class, 'approveUnlock'])->name('score-columns.approve-unlock');
+        Route::post('score-columns/{column}/reject-unlock', [AssessmentPageController::class, 'rejectUnlock'])->name('score-columns.reject-unlock');
+        Route::get('reports', [AssessmentPageController::class, 'reports'])->name('reports');
     });
 
     Route::prefix('manage/{resource}')

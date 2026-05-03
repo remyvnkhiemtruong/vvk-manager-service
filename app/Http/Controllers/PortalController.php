@@ -43,10 +43,19 @@ class PortalController extends Controller
                 'student_code' => $student->student_code,
                 'full_name' => $student->full_name,
                 'scores' => ScoreEntry::query()
+                    ->with(['subject:id,name', 'scoreColumn:id,code,name'])
                     ->where('student_id', $student->id)
                     ->latest()
                     ->limit(8)
-                    ->get(['subject_id', 'score', 'status', 'note']),
+                    ->get(['id', 'subject_id', 'score_column_id', 'score', 'comment', 'status', 'note'])
+                    ->map(fn (ScoreEntry $score): array => [
+                        'id' => $score->id,
+                        'subject_name' => $score->subject?->name,
+                        'score_column' => $score->scoreColumn?->code,
+                        'score' => $score->score,
+                        'comment' => $score->comment,
+                        'status' => $score->status,
+                    ]),
                 'conduct' => ConductScore::query()
                     ->where('student_id', $student->id)
                     ->latest()
@@ -68,4 +77,3 @@ class PortalController extends Controller
         ]);
     }
 }
-

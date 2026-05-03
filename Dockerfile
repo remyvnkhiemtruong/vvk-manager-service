@@ -1,7 +1,7 @@
 FROM php:8.4-cli-alpine AS base
 
 RUN apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && apk add --no-cache bash curl freetype-dev git icu-dev libjpeg-turbo-dev libpng-dev libzip-dev nodejs npm oniguruma-dev postgresql-dev unzip zip \
+    && apk add --no-cache bash curl freetype-dev git icu-dev libjpeg-turbo-dev libpng-dev libxml2-dev libzip-dev nodejs npm oniguruma-dev postgresql-dev unzip zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install dom gd intl mbstring opcache pdo_pgsql simplexml xml xmlreader xmlwriter zip \
     && pecl install redis \

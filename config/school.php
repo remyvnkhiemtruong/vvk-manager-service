@@ -18,6 +18,7 @@ use App\Models\SchoolClass;
 use App\Models\SchoolEvent;
 use App\Models\SchoolYear;
 use App\Models\ScoreCategory;
+use App\Models\ScoreColumn;
 use App\Models\ScoreEntry;
 use App\Models\ScoreRevision;
 use App\Models\Semester;
@@ -62,6 +63,25 @@ return [
         'communication' => 'Thong bao',
     ],
 
+    'assessment' => [
+        'score_types' => [
+            'TX' => ['name' => 'Diem thuong xuyen', 'weight' => 1, 'input_type' => 'numeric', 'counts_toward_average' => true],
+            'GK' => ['name' => 'Diem giua ky', 'weight' => 2, 'input_type' => 'numeric', 'counts_toward_average' => true],
+            'CK' => ['name' => 'Diem cuoi ky', 'weight' => 3, 'input_type' => 'numeric', 'counts_toward_average' => true],
+            'NX' => ['name' => 'Diem nhan xet', 'weight' => 0, 'input_type' => 'comment', 'counts_toward_average' => false],
+        ],
+        'lock_statuses' => [
+            'open' => 'Dang mo',
+            'locked' => 'Da khoa',
+            'unlock_requested' => 'Yeu cau mo khoa',
+        ],
+        'average' => [
+            'numeric_subject_mode' => 'numeric',
+            'comment_subject_mode' => 'comment',
+            'precision' => 2,
+        ],
+    ],
+
     'roles' => [
         'admin' => 'Admin',
         'bgh' => 'Ban giam hieu',
@@ -78,7 +98,7 @@ return [
     'role_permissions' => [
         'admin' => ['*'],
         'bgh' => ['dashboard.view', 'reports.view', 'audit.view', 'portal.view', 'identity.*', 'academic.*', 'assessment.*', 'conduct.*', 'attendance.*', 'activities.*', 'finance.*', 'communication.*'],
-        'giao_vu' => ['dashboard.view', 'reports.view', 'portal.view', 'academic.*', 'assessment.student_scores.view', 'conduct.conduct_scores.view', 'attendance.*', 'communication.announcements.*'],
+        'giao_vu' => ['dashboard.view', 'reports.view', 'portal.view', 'academic.*', 'assessment.score_types.view', 'assessment.score_columns.*', 'assessment.student_scores.view', 'conduct.conduct_scores.view', 'attendance.*', 'communication.announcements.*'],
         'gvcn' => ['dashboard.view', 'portal.view', 'academic.students.view', 'academic.classes.view', 'academic.student_class_enrollments.view', 'assessment.student_scores.view', 'conduct.conduct_scores.*', 'conduct.discipline_cases.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
         'giao_vien_bo_mon' => ['dashboard.view', 'portal.view', 'academic.classes.view', 'academic.subjects.view', 'academic.teaching_assignments.view', 'assessment.student_scores.*', 'attendance.attendance_records.*', 'communication.announcements.view'],
         'doan_truong' => ['dashboard.view', 'portal.view', 'activities.*', 'communication.announcements.*'],
@@ -249,18 +269,29 @@ return [
             'label' => 'Loai diem',
             'model' => ScoreCategory::class,
             'permission' => 'assessment.score_types',
-            'columns' => ['code', 'name', 'weight', 'status'],
-            'fields' => [['name' => 'code', 'label' => 'Ma', 'type' => 'text', 'required' => true], ['name' => 'name', 'label' => 'Ten loai diem', 'type' => 'text', 'required' => true], ['name' => 'weight', 'label' => 'He so', 'type' => 'number', 'step' => '0.1', 'required' => true], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['active' => 'Dang dung', 'inactive' => 'Tam dung'], 'required' => true]],
-            'validation' => ['store' => ['code' => ['required', 'string'], 'name' => ['required', 'string'], 'weight' => ['required', 'numeric'], 'status' => ['required', 'string']], 'update' => ['code' => ['required', 'string'], 'name' => ['required', 'string'], 'weight' => ['required', 'numeric'], 'status' => ['required', 'string']]],
+            'columns' => ['code', 'name', 'weight', 'input_type', 'counts_toward_average', 'status'],
+            'fields' => [['name' => 'code', 'label' => 'Ma', 'type' => 'text', 'required' => true], ['name' => 'name', 'label' => 'Ten loai diem', 'type' => 'text', 'required' => true], ['name' => 'weight', 'label' => 'He so', 'type' => 'number', 'step' => '0.1', 'required' => true], ['name' => 'input_type', 'label' => 'Kieu nhap', 'type' => 'select', 'options' => ['numeric' => 'Diem so', 'comment' => 'Nhan xet'], 'required' => true], ['name' => 'counts_toward_average', 'label' => 'Tinh diem TB', 'type' => 'checkbox'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['active' => 'Dang dung', 'inactive' => 'Tam dung'], 'required' => true]],
+            'validation' => ['store' => ['code' => ['required', 'string'], 'name' => ['required', 'string'], 'weight' => ['required', 'numeric'], 'input_type' => ['required', 'string', 'in:numeric,comment'], 'counts_toward_average' => ['boolean'], 'status' => ['required', 'string']], 'update' => ['code' => ['required', 'string'], 'name' => ['required', 'string'], 'weight' => ['required', 'numeric'], 'input_type' => ['required', 'string', 'in:numeric,comment'], 'counts_toward_average' => ['boolean'], 'status' => ['required', 'string']]],
+            'audit' => true,
+        ],
+        'score_columns' => [
+            'module' => 'assessment',
+            'label' => 'Cot diem',
+            'model' => ScoreColumn::class,
+            'permission' => 'assessment.score_columns',
+            'columns' => ['code', 'name', 'class_id', 'subject_id', 'semester_id', 'score_type_id', 'lock_status'],
+            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'subject_id', 'label' => 'Mon', 'type' => 'select', 'lookup' => $subjectLookup, 'required' => true], ['name' => 'score_type_id', 'label' => 'Loai diem', 'type' => 'select', 'lookup' => ['model' => ScoreCategory::class, 'value' => 'id', 'label' => ['name']], 'required' => true], ['name' => 'code', 'label' => 'Ma cot', 'type' => 'text', 'required' => true], ['name' => 'name', 'label' => 'Ten cot', 'type' => 'text', 'required' => true], ['name' => 'order_index', 'label' => 'Thu tu', 'type' => 'number', 'required' => true], ['name' => 'max_score', 'label' => 'Diem toi da', 'type' => 'number', 'step' => '0.25', 'required' => true], ['name' => 'lock_status', 'label' => 'Trang thai khoa', 'type' => 'select', 'options' => ['open' => 'Dang mo', 'locked' => 'Da khoa', 'unlock_requested' => 'Yeu cau mo khoa'], 'required' => true], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['active' => 'Dang dung', 'inactive' => 'Tam dung'], 'required' => true]],
+            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'code' => ['required', 'string', 'max:64'], 'name' => ['required', 'string'], 'order_index' => ['required', 'integer'], 'max_score' => ['required', 'numeric', 'min:0'], 'lock_status' => ['required', 'string'], 'status' => ['required', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'code' => ['required', 'string', 'max:64'], 'name' => ['required', 'string'], 'order_index' => ['required', 'integer'], 'max_score' => ['required', 'numeric', 'min:0'], 'lock_status' => ['required', 'string'], 'status' => ['required', 'string']]],
+            'audit' => true,
         ],
         'student_scores' => [
             'module' => 'assessment',
             'label' => 'Diem hoc tap',
             'model' => ScoreEntry::class,
             'permission' => 'assessment.student_scores',
-            'columns' => ['student_id', 'subject_id', 'semester_id', 'score_type_id', 'score', 'status'],
-            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'student_id', 'label' => 'Hoc sinh', 'type' => 'select', 'lookup' => $studentLookup, 'required' => true], ['name' => 'subject_id', 'label' => 'Mon', 'type' => 'select', 'lookup' => $subjectLookup, 'required' => true], ['name' => 'score_type_id', 'label' => 'Loai diem', 'type' => 'select', 'lookup' => ['model' => ScoreCategory::class, 'value' => 'id', 'label' => ['name']], 'required' => true], ['name' => 'score', 'label' => 'Diem', 'type' => 'number', 'step' => '0.25', 'required' => true], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['draft' => 'Nhap', 'submitted' => 'Da nop', 'locked' => 'Da khoa'], 'required' => true], ['name' => 'note', 'label' => 'Ghi chu', 'type' => 'textarea']],
-            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'score' => ['required', 'numeric', 'min:0', 'max:10'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'score' => ['required', 'numeric', 'min:0', 'max:10'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']]],
+            'columns' => ['student_id', 'subject_id', 'semester_id', 'score_column_id', 'score', 'comment', 'status'],
+            'fields' => [['name' => 'school_year_id', 'label' => 'Nam hoc', 'type' => 'select', 'lookup' => $yearLookup, 'required' => true], ['name' => 'semester_id', 'label' => 'Hoc ky', 'type' => 'select', 'lookup' => $semesterLookup, 'required' => true], ['name' => 'class_id', 'label' => 'Lop', 'type' => 'select', 'lookup' => $classLookup], ['name' => 'student_id', 'label' => 'Hoc sinh', 'type' => 'select', 'lookup' => $studentLookup, 'required' => true], ['name' => 'subject_id', 'label' => 'Mon', 'type' => 'select', 'lookup' => $subjectLookup, 'required' => true], ['name' => 'score_type_id', 'label' => 'Loai diem', 'type' => 'select', 'lookup' => ['model' => ScoreCategory::class, 'value' => 'id', 'label' => ['name']], 'required' => true], ['name' => 'score_column_id', 'label' => 'Cot diem', 'type' => 'select', 'lookup' => ['model' => ScoreColumn::class, 'value' => 'id', 'label' => ['code', 'name']]], ['name' => 'score', 'label' => 'Diem', 'type' => 'number', 'step' => '0.25'], ['name' => 'comment', 'label' => 'Nhan xet', 'type' => 'textarea'], ['name' => 'status', 'label' => 'Trang thai', 'type' => 'select', 'options' => ['draft' => 'Nhap', 'submitted' => 'Da nop', 'locked' => 'Da khoa'], 'required' => true], ['name' => 'note', 'label' => 'Ghi chu', 'type' => 'textarea']],
+            'validation' => ['store' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'score_column_id' => ['nullable', 'exists:score_columns,id'], 'score' => ['nullable', 'numeric', 'min:0', 'max:10'], 'comment' => ['nullable', 'string'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']], 'update' => ['school_year_id' => ['required', 'exists:school_years,id'], 'semester_id' => ['required', 'exists:semesters,id'], 'class_id' => ['nullable', 'exists:classes,id'], 'student_id' => ['required', 'exists:students,id'], 'subject_id' => ['required', 'exists:subjects,id'], 'score_type_id' => ['required', 'exists:score_types,id'], 'score_column_id' => ['nullable', 'exists:score_columns,id'], 'score' => ['nullable', 'numeric', 'min:0', 'max:10'], 'comment' => ['nullable', 'string'], 'status' => ['required', 'string'], 'note' => ['nullable', 'string']]],
             'audit' => true,
             'revision' => ['model' => ScoreRevision::class, 'foreign_key' => 'student_score_id'],
         ],
